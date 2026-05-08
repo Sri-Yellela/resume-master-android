@@ -1,0 +1,31 @@
+﻿package com.resumemaster.android.data
+
+import com.resumemaster.android.models.*
+
+object MockData {
+    val jobs = listOf(
+        Job(company="Google", role="Android Platform Engineer", location="Mountain View, CA", salary="$155k-$220k", tags=listOf("Kotlin","AOSP","Compose"), matchScore=96, logoColor="#4285F4", description="Build core Android platform experiences, improve performance, and partner across product teams on high-impact mobile surfaces."),
+        Job(company="Stripe", role="Mobile Payments Engineer", location="New York, NY", salary="$150k-$210k", tags=listOf("Payments","SDK","Security"), matchScore=93, logoColor="#635BFF", description="Own Android payment SDK workflows, reliability, and developer ergonomics for merchants integrating Stripe."),
+        Job(company="Linear", role="Product Engineer, Mobile", location="Remote", salary="$140k-$190k", tags=listOf("Product","Sync","UX"), matchScore=91, logoColor="#5E6AD2", description="Create fast mobile collaboration flows with offline-friendly sync and refined interaction details."),
+        Job(company="Notion", role="Mobile Infrastructure Engineer", location="San Francisco, CA", salary="$145k-$205k", tags=listOf("Infra","Offline","Performance"), matchScore=90, logoColor="#111111", description="Scale mobile foundations for documents, workspace sync, and smooth editing across devices."),
+        Job(company="Figma", role="Android Collaboration Engineer", location="San Francisco, CA", salary="$150k-$215k", tags=listOf("Realtime","Canvas","Design"), matchScore=89, logoColor="#A259FF", description="Bring multiplayer design workflows to Android with precise UI, reliable sync, and expressive previews."),
+        Job(company="Airbnb", role="Senior Android Engineer", location="Seattle, WA", salary="$150k-$200k", tags=listOf("Travel","Design Systems","Maps"), matchScore=87, logoColor="#FF5A5F", description="Ship polished guest and host experiences with strong architecture and accessible Compose UI."),
+        Job(company="Netflix", role="Android Playback Engineer", location="Los Gatos, CA", salary="$160k-$230k", tags=listOf("Video","Performance","Kotlin"), matchScore=85, logoColor="#E50914", description="Improve streaming playback, diagnostics, and device compatibility for Android members worldwide."),
+        Job(company="Uber", role="Android Marketplace Engineer", location="San Francisco, CA", salary="$145k-$205k", tags=listOf("Marketplace","Maps","Experimentation"), matchScore=84, logoColor="#000000", description="Build rider and driver marketplace surfaces backed by experimentation and resilient networking."),
+        Job(company="Dropbox", role="Mobile Sync Engineer", location="Remote", salary="$135k-$185k", tags=listOf("Sync","Storage","Files"), matchScore=83, logoColor="#0061FF", description="Improve file sync, previews, and offline recovery for Android users handling critical documents."),
+        Job(company="Canva", role="Android Design Tools Engineer", location="Austin, TX", salary="$130k-$180k", tags=listOf("Compose","Graphics","Templates"), matchScore=81, logoColor="#00C4CC", description="Create delightful mobile design tooling with template previews, export flows, and rich editing controls.")
+    )
+    val templates = listOf(Template("classic","Classic","#1B2A4A","serif","single"), Template("modern","Modern","#01696F","sans","split"), Template("minimal","Minimal","#7A7974","sans","single"), Template("executive","Executive","#D19900","serif","two-column"), Template("creative","Creative","#01696F","sans","split"), Template("technical","Technical","#437A22","mono","two-column"))
+    val defaultResume = Resume(name="Sri Yellela", templateID="modern", sections=listOf(
+        ResumeSection(title="Summary", order=0, fields=listOf(ResumeField(label="Profile", value="Android and full-stack engineer building reliable, polished product experiences.", isBold=true))),
+        ResumeSection(title="Experience", order=1, fields=listOf(ResumeField(label="Resume Master", value="Built cross-platform resume workflows, job queues, ATS scoring, and export tooling."))),
+        ResumeSection(title="Projects", order=2, fields=listOf(ResumeField(label="Mobile Apps", value="Shipped native iOS and Android companion apps with shared models and sync protocol."))),
+        ResumeSection(title="Skills", order=3, fields=listOf(ResumeField(label="Languages", value="Kotlin, Swift, JavaScript, SQL"), ResumeField(label="Tools", value="Jetpack Compose, SwiftUI, Node, SQLite"))),
+        ResumeSection(title="Education", order=4, fields=listOf(ResumeField(label="Northeastern University", value="Computer Science"))),
+        ResumeSection(title="Links", order=5, fields=listOf(ResumeField(label="GitHub", value="github.com/Sri-Yellela")))
+    ))
+    val adminUsers = listOf(AdminUser("u1","Sri Yellela","sri@example.com","admin","Pro",false,"May 2026",8), AdminUser("u2","Maya Chen","maya@example.com","user","Plus",false,"Apr 2026",3), AdminUser("u3","Jordan Lee","jordan@example.com","user","Basic",true,"Apr 2026",1), AdminUser("u4","Avery Patel","avery@example.com","user","Pro",false,"Mar 2026",6))
+    val flags = listOf(
+        FeatureFlag("ENABLE_AUTO_APPLY","Controls queued and immediate application workflows.",true,listOf("Web","iOS","Android")), FeatureFlag("ENABLE_PDF_EXPORT","Allows users to export generated resumes as PDF.",true,listOf("Web","iOS","Android")), FeatureFlag("ENABLE_TEMPLATE_PICKER","Enables template browsing and selection.",true,listOf("Web","iOS","Android")), FeatureFlag("ENABLE_ATS_SCORE","Shows ATS scoring on jobs and resumes.",true,listOf("Web","iOS","Android")), FeatureFlag("ENABLE_JOB_FEED","Enables the personalized job feed.",true,listOf("Web","iOS","Android")), FeatureFlag("MAINTENANCE_MODE","Pauses customer-facing interactions for maintenance.",false,listOf("Web","iOS","Android")), FeatureFlag("NEW_USER_ONBOARDING","Shows onboarding for new accounts.",true,listOf("Web","iOS","Android")), FeatureFlag("BETA_FEATURES","Exposes experimental features to beta users.",false,listOf("Web","iOS","Android")))
+    val analytics = AdminAnalytics(128,14,77,482,9,61,328,listOf(78,84,91,100,113,119,128),mapOf("Modern" to 42,"Executive" to 28,"Classic" to 18,"Technical" to 12),mapOf("Queue" to .42f,"Star" to .28f,"Skip" to .30f))
+}
