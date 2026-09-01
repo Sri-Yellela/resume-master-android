@@ -1,4 +1,4 @@
-﻿# Resume Master — Android
+# Resume Master — Android
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat&logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=flat&logo=jetpackcompose&logoColor=white)
@@ -10,7 +10,7 @@ PDF export, and full admin panel.
 
 ## Interactions
 - Velocity-sensitive card stack with spring physics
-- Soft swipe right: queue | Hard throw right: apply
+- Swipe right: queue for review | Firm swipe right: queue first
 - Diagonal swipe: star | Left swipe: skip
 - Material swipe actions on resume sections
 - iMessage-style action badge notices

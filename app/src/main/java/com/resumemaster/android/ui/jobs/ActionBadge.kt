@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.jobs
+package com.resumemaster.android.ui.jobs
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.spring
@@ -19,4 +19,4 @@ import kotlinx.coroutines.delay
 
 sealed class BadgeState{ data object Hidden:BadgeState(); data class Visible(val action:SwipeAction):BadgeState() }
 @Composable fun ActionBadge(action:SwipeAction?,onDismiss:()->Unit={}){ var visible by remember{mutableStateOf(false)}; LaunchedEffect(action){ if(action!=null){ visible=true; delay(2500); visible=false; onDismiss() } }; AnimatedVisibility(visible && action!=null,enter=scaleIn(initialScale=.6f,animationSpec=spring(dampingRatio=.6f))+fadeIn(),exit=fadeOut()){ val (c,i,t)=meta(action?:SwipeAction.Skip); Surface(shape=RoundedCornerShape(999.dp),color=MaterialTheme.colorScheme.surface,border=BorderStroke(1.dp,Border),shadowElevation=2.dp){ Row(Modifier.padding(horizontal=14.dp,vertical=9.dp),verticalAlignment=Alignment.CenterVertically){ Icon(i,contentDescription=t,tint=c); Text(t,style=LabelSmall,color=MaterialTheme.colorScheme.onSurface,modifier=Modifier.padding(start=8.dp)) } } } }
-private fun meta(action:SwipeAction):Triple<Color,ImageVector,String> = when(action){ SwipeAction.Queue->Triple(Primary,Icons.Rounded.RadioButtonUnchecked,"Queued for auto-apply"); SwipeAction.Apply->Triple(Success,Icons.Rounded.CheckCircle,"Application sent"); SwipeAction.Star->Triple(Gold,Icons.Rounded.Star,"Saved to starred"); SwipeAction.Dislike->Triple(TextMuted,Icons.Rounded.HorizontalRule,"Skipped"); SwipeAction.Skip->Triple(TextMuted,Icons.Rounded.HorizontalRule,"Snoozed") }
+private fun meta(action:SwipeAction):Triple<Color,ImageVector,String> = when(action){ SwipeAction.Queue->Triple(Primary,Icons.Rounded.RadioButtonUnchecked,"Queued for review"); SwipeAction.QueuePriority->Triple(Primary,Icons.Rounded.ArrowCircleUp,"Queued first for review"); SwipeAction.Star->Triple(Gold,Icons.Rounded.Star,"Saved to starred"); SwipeAction.Dislike->Triple(TextMuted,Icons.Rounded.HorizontalRule,"Skipped"); SwipeAction.Skip->Triple(TextMuted,Icons.Rounded.HorizontalRule,"Snoozed") }
