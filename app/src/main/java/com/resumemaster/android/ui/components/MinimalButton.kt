@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.components
+package com.resumemaster.android.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.*

@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.components
+package com.resumemaster.android.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*

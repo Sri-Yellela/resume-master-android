@@ -1,13 +1,19 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup excludes for API 28 through 30 (android:fullBackupContent).
+
+  WHY THIS FILE IS NOT EMPTY: android:allowBackup="true" in the manifest means every
+  SharedPreferences file is swept into Google cloud backup BY DEFAULT. The mobile bearer token
+  lives in "rm_secure_prefs" (EncryptedSharedPreferences). It is a durable, sessionLess credential
+  with a 90 day absolute lifetime, so a copy of it leaving the device is a copy that stays valid.
+
+  The Keystore key that wraps it is hardware bound and is never backed up, so a restored copy would
+  not even decrypt. But the ciphertext would still have left the device, and "it probably cannot be
+  read" is not the property we want from a credential store.
+
+  Resume content is deliberately still backed up. Losing a draft on device replacement is a real
+  cost to the user, and a draft is not a credential.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="sharedpref" path="rm_secure_prefs.xml"/>
 </full-backup-content>

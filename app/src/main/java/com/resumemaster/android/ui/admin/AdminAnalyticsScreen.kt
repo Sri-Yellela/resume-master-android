@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.admin
+package com.resumemaster.android.ui.admin
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*

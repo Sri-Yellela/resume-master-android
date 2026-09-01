@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.viewmodel
+package com.resumemaster.android.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.resumemaster.android.auth.LinkedInResumeFields

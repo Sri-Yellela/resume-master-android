@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.data
+package com.resumemaster.android.data
 
 import com.resumemaster.android.models.*
 

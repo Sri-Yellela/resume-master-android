@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.util
+package com.resumemaster.android.util
 
 import android.content.Context
 import android.os.*

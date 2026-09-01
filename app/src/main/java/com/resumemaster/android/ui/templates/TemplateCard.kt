@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.templates
+package com.resumemaster.android.ui.templates
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*

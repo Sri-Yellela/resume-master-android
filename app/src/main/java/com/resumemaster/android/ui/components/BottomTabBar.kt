@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.components
+package com.resumemaster.android.ui.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*

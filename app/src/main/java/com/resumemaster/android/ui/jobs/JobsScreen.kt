@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.jobs
+package com.resumemaster.android.ui.jobs
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*

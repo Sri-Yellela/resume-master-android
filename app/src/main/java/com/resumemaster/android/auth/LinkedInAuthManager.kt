@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.auth
+package com.resumemaster.android.auth
 
 import android.content.Context
 import android.content.Intent

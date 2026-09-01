@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.preview
+package com.resumemaster.android.ui.preview
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState

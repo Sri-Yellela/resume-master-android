@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
@@ -6,7 +6,7 @@
 
 android {
     namespace = "com.resumemaster.android"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.resumemaster.android"
@@ -63,7 +63,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.itext.core)`r`n    implementation(libs.androidx.browser)
+    implementation(libs.itext.core)
+    implementation(libs.androidx.browser)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

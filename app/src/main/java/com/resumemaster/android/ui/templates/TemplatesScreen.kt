@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.templates
+package com.resumemaster.android.ui.templates
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior

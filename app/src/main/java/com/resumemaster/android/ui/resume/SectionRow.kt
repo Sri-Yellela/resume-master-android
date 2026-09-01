@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.resume
+package com.resumemaster.android.ui.resume
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*

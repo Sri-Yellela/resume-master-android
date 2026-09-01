@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.models
+package com.resumemaster.android.models
 
 import java.util.UUID
 

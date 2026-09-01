@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android
+package com.resumemaster.android
 
 import android.app.Application
 

@@ -1,4 +1,4 @@
-﻿[versions]
+[versions]
 agp = "9.0.1"
 kotlin = "2.3.21"
 ksp = "2.3.1"
@@ -13,7 +13,8 @@ navigation = "2.9.8"
 room = "2.8.4"
 coroutines = "1.10.2"
 accompanist = "0.36.0"
-itext = "9.6.0"`r`nbrowser = "1.8.0"
+itext = "9.6.0"
+browser = "1.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -40,7 +41,8 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
-itext-core = { group = "com.itextpdf", name = "itext7-core", version.ref = "itext" }`r`nandroidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+itext-core = { group = "com.itextpdf", name = "itext7-core", version.ref = "itext" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

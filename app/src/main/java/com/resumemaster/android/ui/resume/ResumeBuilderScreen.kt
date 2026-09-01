@@ -1,4 +1,4 @@
-﻿package com.resumemaster.android.ui.resume
+package com.resumemaster.android.ui.resume
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
