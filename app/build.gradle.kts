@@ -35,6 +35,9 @@ android {
 
     buildFeatures {
         compose = true
+        // AppGraph reads BuildConfig.DEBUG to choose between the local server and production.
+        // Off by default since AGP 8, and its absence is a compile error rather than a wrong value.
+        buildConfig = true
     }
 
     packaging {
@@ -65,11 +68,13 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.itext.core)
     implementation(libs.androidx.browser)
+    implementation(libs.androidx.security.crypto)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     testImplementation(libs.junit)
+    testImplementation(libs.json)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

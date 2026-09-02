@@ -1,161 +1,242 @@
 package com.resumemaster.android.data
 
+import com.resumemaster.android.data.contract.AutomationTier
+import com.resumemaster.android.data.contract.ContractJob
+import com.resumemaster.android.data.contract.FeedError
+import com.resumemaster.android.data.contract.FeedException
+import com.resumemaster.android.data.contract.JobFeedPage
+import com.resumemaster.android.data.net.ApiClient
 import com.resumemaster.android.models.Job
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.net.URL
-import javax.net.ssl.HttpsURLConnection
 
-// ─── API response types (internal — not the same as the UI Job model) ────────
-
-private data class ApiJob(
-  val id: String,
-  val title: String,
-  val company: String,
-  val location: String,
-  val url: String,
-  val description: String?,
-  val salaryMin: Double?,
-  val salaryMax: Double?,
-  val salaryCurrency: String?,
-  val postedAt: String?,
-  val contractType: String?,
-  val remote: Boolean?,
-)
-
-data class JobAttribution(val name: String, val url: String)
-
-data class JobSearchResult(
-  val jobs: List<Job>,
-  val total: Int,
-  val page: Int,
-  val pageSize: Int,
-  val sources: List<String>,
-  val attribution: List<JobAttribution>,
-)
-
-data class JobSearchParams(
-  val query: String    = "",
+/**
+ * The filter set a cursor belongs to.
+ *
+ * A cursor is valid ONLY for the filters that produced it. Bundling them into one object means a
+ * filter change is a value change, so `feed()` can detect it and restart paging instead of sending a
+ * cursor the server will reject.
+ */
+data class JobFilters(
+  val query: String = "",
   val location: String = "",
-  val country: String  = "us",
-  val page: Int        = 1,
-  val pageSize: Int    = 10,
-)
-
-// ─── Maps API response → existing UI Job model ───────────────────────────────
-
-private fun ApiJob.toUiJob(): Job {
-  val salary = when {
-    salaryMin != null && salaryMax != null ->
-      "\$${salaryMin.toInt() / 1000}k–\$${salaryMax.toInt() / 1000}k"
-    salaryMin != null -> "\$${salaryMin.toInt() / 1000}k+"
-    salaryMax != null -> "up to \$${salaryMax.toInt() / 1000}k"
-    else -> null
+  val starred: Boolean? = null,
+  val visited: Boolean? = null,
+  /**
+   * Defaults to the tiers a phone can actually complete.
+   *
+   * SERVER-SIDE, never client-side. The server pages before a client could filter, so hiding rows
+   * after the fact yields short pages, a `total` that disagrees with the list, and — on a cursor
+   * feed — a cursor that has advanced past rows the user never saw.
+   */
+  val tiersInclude: List<String> = AutomationTier.completableWireValues(),
+) {
+  fun asQueryParams(pageSize: Int, cursor: String?): List<Pair<String, String>> = buildList {
+    if (query.isNotBlank()) add("q" to query)
+    if (location.isNotBlank()) add("location" to location)
+    starred?.let { add("starred" to it.toString()) }
+    visited?.let { add("visited" to it.toString()) }
+    if (tiersInclude.isNotEmpty()) add("tiers_include" to tiersInclude.joinToString(","))
+    add("pageSize" to pageSize.toString())
+    cursor?.let { add("cursor" to it) }
   }
-  return Job(
-    id          = id,
-    company     = company,
-    role        = title,
-    location    = if (remote == true && !location.contains("remote", ignoreCase = true))
-                    "$location (Remote)" else location,
-    salary      = salary,
-    tags        = listOfNotNull(contractType?.replace("_", " ")),
-    matchScore  = 0,
-    logoColor   = "#888888",
-    description = description ?: "",
-    postedDate  = System.currentTimeMillis(),
-  )
 }
 
-// ─── Repository ───────────────────────────────────────────────────────────────
+/** What a swipe asserts about a job. Maps to PATCH /api/jobs/interact. */
+data class Interaction(val starred: Boolean? = null, val disliked: Boolean? = null)
 
-class JobRepository {
+class JobRepository(
+  private val client: ApiClient,
+) {
 
-  private val BASE_URL = "https://resumemaster.one"
-  // For local dev: "http://10.0.2.2:3000"
+  private val _jobs = MutableStateFlow<List<ContractJob>>(emptyList())
+  val jobs: StateFlow<List<ContractJob>> = _jobs
 
-  private val _jobs = MutableStateFlow<List<Job>>(MockData.jobs)
-  val jobs: StateFlow<List<Job>> = _jobs
+  private val _uiJobs = MutableStateFlow<List<Job>>(emptyList())
+  val uiJobs: StateFlow<List<Job>> = _uiJobs
 
-  private val _attribution = MutableStateFlow<List<JobAttribution>>(emptyList())
-  val attribution: StateFlow<List<JobAttribution>> = _attribution
+  /** Cursor for the NEXT page, and the filters it belongs to. */
+  private var nextCursor: String? = null
+  private var cursorFilters: JobFilters? = null
+  private var exhausted = false
 
-  /** Legacy rotate used by swipe UI. */
-  fun rotate(job: Job) {
-    _jobs.value = _jobs.value.filterNot { it.id == job.id } +
-      job.copy(id = job.id + "-next", postedDate = System.currentTimeMillis())
+  /** Reset paging. Call on any filter change, and on a cursor rejection. */
+  fun restart() {
+    nextCursor = null
+    cursorFilters = null
+    exhausted = false
+    _jobs.value = emptyList()
+    _uiJobs.value = emptyList()
   }
 
-  suspend fun search(params: JobSearchParams): Result<JobSearchResult> =
+  val isExhausted: Boolean get() = exhausted
+
+  /**
+   * Fetch the next page.
+   *
+   * Sends a cursor ONLY when it belongs to the same filter set. A filter change silently restarts
+   * paging rather than sending a cursor that would come back `cursor_sort_mismatch`.
+   */
+  suspend fun feed(filters: JobFilters, pageSize: Int = 20): Result<JobFeedPage> =
     withContext(Dispatchers.IO) {
+      if (cursorFilters != null && cursorFilters != filters) restart()
+      if (exhausted) {
+        return@withContext Result.success(
+          JobFeedPage(emptyList(), _jobs.value.size, null, com.resumemaster.android.data.contract.PagingMode.CURSOR,
+            fromCache = true, reason = "exhausted", page = null, totalPages = null, droppedRows = 0)
+        )
+      }
+
       try {
-        val queryParts = buildList {
-          if (params.query.isNotBlank())    add("q=${encode(params.query)}")
-          if (params.location.isNotBlank()) add("location=${encode(params.location)}")
-          add("country=${params.country}")
-          add("page=${params.page}")
-          add("pageSize=${params.pageSize}")
-        }
-        val urlString  = "$BASE_URL/api/jobs?${queryParts.joinToString("&")}"
-        val connection = URL(urlString).openConnection() as HttpsURLConnection
-        connection.requestMethod = "GET"
-        connection.connectTimeout = 8000
-        connection.readTimeout    = 8000
+        val response = client.get("/api/jobs", filters.asQueryParams(pageSize, nextCursor))
 
-        val responseText = connection.inputStream.bufferedReader().readText()
-        val json         = JSONObject(responseText)
-
-        if (!json.optBoolean("success", false)) {
-          return@withContext Result.failure(Exception("API returned success: false"))
-        }
-
-        val jobsArray = json.getJSONArray("jobs")
-        val apiJobs = (0 until jobsArray.length()).map { i ->
-          val j = jobsArray.getJSONObject(i)
-          ApiJob(
-            id           = j.getString("id"),
-            title        = j.getString("title"),
-            company      = j.getString("company"),
-            location     = j.getString("location"),
-            url          = j.getString("url"),
-            description  = j.optString("description").ifEmpty { null },
-            salaryMin    = if (j.isNull("salary_min")) null else j.getDouble("salary_min"),
-            salaryMax    = if (j.isNull("salary_max")) null else j.getDouble("salary_max"),
-            salaryCurrency = j.optString("salary_currency").ifEmpty { null },
-            postedAt     = j.optString("posted_at").ifEmpty { null },
-            contractType = j.optString("contract_type").ifEmpty { null },
-            remote       = if (j.isNull("remote")) null else j.getBoolean("remote"),
+        if (!response.isSuccess) {
+          val kind = when {
+            response.isUnauthorized -> FeedError.UNAUTHORIZED
+            response.status == 400 -> when (codeOf(response.body)) {
+              "cursor_sort_mismatch" -> FeedError.CURSOR_SORT_MISMATCH
+              "cursor_malformed" -> FeedError.CURSOR_MALFORMED
+              else -> FeedError.BAD_FILTER
+            }
+            else -> FeedError.SERVER
+          }
+          // A rejected cursor is not retryable. Drop it here so the caller's retry starts a valid
+          // feed instead of replaying the same failure.
+          if (kind.restartsFeed) restart()
+          return@withContext Result.failure(
+            FeedException(kind, errorOf(response.body, "Feed request failed (${response.status})"))
           )
         }
 
-        val attrArray = json.getJSONArray("attribution")
-        val attribution = (0 until attrArray.length()).map { i ->
-          val a = attrArray.getJSONObject(i)
-          JobAttribution(name = a.getString("name"), url = a.getString("url"))
+        val page = JobFeedPage.fromJson(JSONObject(response.body))
+
+        nextCursor = page.nextCursor
+        cursorFilters = filters
+        exhausted = page.isLastPage
+
+        _jobs.value = _jobs.value + page.jobs
+        _uiJobs.value = _jobs.value.map { it.toUiJob() }
+
+        Result.success(page)
+      } catch (e: Exception) {
+        Result.failure(FeedException(FeedError.NETWORK, e.message ?: "Network error"))
+      }
+    }
+
+  /**
+   * Record a swipe.
+   *
+   * ── WHY NOT PATCH /api/jobs/{id}/starred ────────────────────────────────────────────────────────
+   *
+   * That route TOGGLES. On a flaky phone network a retried request undoes the first one and returns
+   * 200, so the user's swipe silently reverses and nothing reports it. /api/jobs/interact takes the
+   * DESIRED VALUE, making it idempotent, and echoes the resolved id and the values now stored — so
+   * this reconciles against what the server holds rather than what the UI optimistically rendered.
+   * The contract excludes the toggle routes for this reason.
+   */
+  suspend fun interact(jobId: String, interaction: Interaction): Result<Interaction> =
+    withContext(Dispatchers.IO) {
+      try {
+        val body = JSONObject().put("jobId", jobId)
+        interaction.starred?.let { body.put("starred", it) }
+        interaction.disliked?.let { body.put("disliked", it) }
+
+        val response = client.patch("/api/jobs/interact", body.toString())
+        if (!response.isSuccess) {
+          return@withContext Result.failure(
+            Exception(errorOf(response.body, "Could not save that (${response.status})"))
+          )
         }
 
-        val uiJobs = apiJobs.map { it.toUiJob() }
-        _jobs.value = uiJobs
-        _attribution.value = attribution
+        val json = JSONObject(response.body)
+        val resolved = Interaction(
+          starred = if (json.has("starred")) json.optBoolean("starred") else null,
+          disliked = if (json.has("disliked")) json.optBoolean("disliked") else null,
+        )
 
-        Result.success(JobSearchResult(
-          jobs        = uiJobs,
-          total       = json.getInt("total"),
-          page        = json.getInt("page"),
-          pageSize    = json.getInt("pageSize"),
-          sources     = json.getJSONArray("sources").let { arr ->
-            (0 until arr.length()).map { arr.getString(it) }
-          },
-          attribution = attribution,
-        ))
+        // Reconcile against the server's answer, keyed on the id IT resolved.
+        val resolvedId = json.optString("jobId", jobId)
+        _jobs.value = _jobs.value.map { job ->
+          if (job.id != resolvedId) job
+          else job.copy(
+            starred = resolved.starred ?: job.starred,
+            disliked = resolved.disliked ?: job.disliked,
+          )
+        }
+        _uiJobs.value = _jobs.value.map { it.toUiJob() }
+
+        Result.success(resolved)
       } catch (e: Exception) {
         Result.failure(e)
       }
     }
 
-  private fun encode(s: String) =
-    java.net.URLEncoder.encode(s, "UTF-8")
+  private fun codeOf(body: String): String? = try {
+    JSONObject(body).optString("code", "").ifEmpty { null }
+  } catch (_: Exception) { null }
+
+  private fun errorOf(body: String, fallback: String): String = try {
+    JSONObject(body).optString("error", "").ifEmpty { fallback }
+  } catch (_: Exception) { fallback }
+}
+
+/**
+ * Contract row -> the existing UI model.
+ *
+ * ── WHAT THIS FIXES ─────────────────────────────────────────────────────────────────────────────
+ *
+ * `matchScore` and `logoColor` were HARDCODED to 0 and "#888888" in the parser this replaces, while
+ * the server was sending real values. Both are now read.
+ *
+ * The score is carried through as a NULLABLE Int and is not rendered as a number anywhere — the
+ * contract marks it internal ("DO NOT DISPLAY THIS NUMBER") and the UI shows the band. Null stays
+ * null: it means the scorer declined, which is its own band and must never render as a low score.
+ */
+/** Avatar colours. Chosen by a stable hash of the company name, never at random. */
+private val LOGO_PALETTE = listOf(
+  "#4f46e5", "#0891b2", "#059669", "#b45309", "#be123c", "#7c3aed", "#0369a1", "#4d7c0f",
+)
+
+fun ContractJob.toUiJob(): Job {
+  val tier = AutomationTier.from(automationTier)
+
+  val salaryText = when {
+    salaryMin != null && salaryMax != null ->
+      "$" + (salaryMin.toInt() / 1000) + "k–$" + (salaryMax.toInt() / 1000) + "k"
+    salaryMin != null -> "$" + (salaryMin.toInt() / 1000) + "k+"
+    salaryMax != null -> "up to $" + (salaryMax.toInt() / 1000) + "k"
+    else -> null
+  }
+
+  return Job(
+    id = id,
+    company = company,
+    role = title,
+    location = if (remote && !location.contains("remote", ignoreCase = true))
+      (if (location.isBlank()) "Remote" else "$location (Remote)") else location,
+    salary = salaryText,
+    // workplaceType and contractType are real fields the old parser never read. `sourcePlatform` is
+    // deliberately NOT used: it looks like the ATS name and is not — it resolves to where the job
+    // was found, and the contract lists it as a trap. automationTier is the trustworthy field.
+    tags = listOfNotNull(
+      workplaceType,
+      contractType?.replace("_", " "),
+      experienceLevel,
+      if (!tier.completableOnMobile) "Desktop only" else null,
+    ),
+    matchScore = matchScore,
+    // NOT companyIconUrl. `logoColor` is fed to android.graphics.Color.parseColor in JobCard, so a
+    // URL here is a crash, not a wrong colour — and the server has no colour field at all. The old
+    // parser's hardcoded "#888888" made every avatar identical grey; this derives a STABLE colour
+    // from the company name, so the same employer always looks the same without inventing data.
+    // Loading the real companyIconUrl image is a UI change and is not made here.
+    logoColor = LOGO_PALETTE[
+      ((company.ifEmpty { id }.hashCode() % LOGO_PALETTE.size) + LOGO_PALETTE.size) % LOGO_PALETTE.size
+    ],
+    description = description,
+    postedDate = (discoveredAt ?: 0L) * 1000L,
+  )
 }
