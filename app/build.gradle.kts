@@ -47,6 +47,13 @@ android {
     }
 }
 
+// Room writes the schema JSON to app/schemas/ so a future migration can be written against a real
+// baseline. Without it Room warns and exports nothing, and the first migration would have to be
+// reconstructed from whatever the entity classes look like by then.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.core.ktx)

@@ -19,6 +19,9 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.resumemaster", appContext.packageName)
+        // Was "com.example.resumemaster" — the Studio template's placeholder, which this app has
+        // never used. The assertion had simply never run: the build itself was unverified until
+        // 2026-09-01, so no instrumented test had ever executed.
+        assertEquals("com.resumemaster.android", appContext.packageName)
     }
 }

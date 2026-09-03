@@ -1,11 +1,14 @@
 package com.resumemaster.android.ui.resume
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -18,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -29,7 +33,7 @@ import com.resumemaster.android.viewmodel.ResumeViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResumeBuilderScreen(vm: ResumeViewModel = viewModel()) {
-    val resume by vm.activeResume.collectAsState()
+    val loaded by vm.activeResume.collectAsState()
     val pendingImport by LinkedInAuthManager.pendingImport.collectAsState()
     val context = LocalContext.current
     var editing by remember { mutableStateOf<ResumeSection?>(null) }
@@ -41,6 +45,22 @@ fun ResumeBuilderScreen(vm: ResumeViewModel = viewModel()) {
             LinkedInAuthManager.consumeImport()
             importNotice = "Name and email imported from LinkedIn"
         }
+    }
+
+    // NOTHING EDITABLE RENDERS UNTIL THE STORED RESUME IS LOADED.
+    //
+    // This is the guard that makes ResumeViewModel's "drop edits before ready" branch unreachable
+    // in practice: there is no field to type into yet. Showing the seeded resume here instead would
+    // be showing someone else's data for a frame, and any keystroke in that frame would be
+    // persisted over the resume actually on disk.
+    val resume = loaded
+    if (resume == null) {
+        Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("Resume") }) }) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        return
     }
 
     Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("Resume") }) }) { padding ->
@@ -79,7 +99,7 @@ fun ResumeBuilderScreen(vm: ResumeViewModel = viewModel()) {
                 { editing = null },
                 {
                     vm.updateSectionTitle(section.id, it)
-                    editing = vm.activeResume.value.sections.first { updated -> updated.id == section.id }
+                    editing = vm.activeResume.value?.sections?.firstOrNull { updated -> updated.id == section.id }
                 },
                 { id, label -> vm.updateFieldLabel(section.id, id, label) },
                 { id, value -> vm.updateField(section.id, id, value) },
