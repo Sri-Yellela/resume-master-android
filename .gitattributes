@@ -1,0 +1,32 @@
+# Line endings are a property of this REPOSITORY, not of each developer's git config.
+#
+# Until this file existed, every line ending here was decided by whatever `core.autocrlf` the
+# cloning machine happened to have. On this machine it is `true`, so the index is all-LF and the
+# working tree is all-CRLF -- and the consequence is that a script which writes a file WITHOUT
+# doing that conversion produces a working tree with mixed line endings that `git status` reports
+# as clean, because git normalises CRLF back to LF on the way in and the script's LF lines are
+# already LF. Two files were found in exactly that state (`gradle.properties`, `JobCard.kt`):
+# invisible to git, invisible to the build, and the same mechanism that once made a revert regex
+# assume `\n` against a CRLF file and left a test looking verified when it was not.
+#
+# `text=auto` pins the normalisation that was previously incidental. It is a no-op against the
+# current object store, which is already all-LF -- `git add --renormalize .` changes nothing.
+* text=auto
+
+# gradlew is executed by /bin/sh on Unix and CI. A CR at the end of its shebang or of any
+# `exec` line is a syntax error there, so this one cannot be left to a local setting.
+gradlew text eol=lf
+
+# cmd.exe is the other direction: it parses labels and `goto` by byte offset and mis-handles
+# LF-only batch files. gradlew.bat is currently stored LF, which is the fragile form.
+*.bat text eol=crlf
+
+# Declared explicitly rather than left to git's content heuristic, which is right about these
+# but has no reason to be trusted with the app's only launcher assets.
+*.jar binary
+*.webp binary
+*.png binary
+*.apk binary
+*.aab binary
+*.keystore binary
+*.jks binary
