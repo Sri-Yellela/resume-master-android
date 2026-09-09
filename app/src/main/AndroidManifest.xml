@@ -9,6 +9,28 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!--
+                THIS HOST IS A PLACEHOLDER AND THE FIX IS SERVER-SIDE, NOT HERE.
+
+                YOUR_DOMAIN.com is a template value the project does not own, so App Links
+                verification fails and this filter never claims the callback. The obvious repair is
+                to write resumemaster.one, and it would not work either: Android verifies an
+                autoVerify filter by fetching https://<host>/.well-known/assetlinks.json and
+                requires real JSON naming this applicationId and the signing certificate's SHA-256.
+                That path currently answers HTTP 200 with the web app's index.html, because the SPA
+                has a catch-all route — the same catch-all that has already "confirmed" a
+                deployment which had not happened. It was probed by reading the body, not the
+                status code.
+
+                So the order is: serve assetlinks.json for resumemaster.one with this app's release
+                fingerprint, THEN set the host here, THEN verify with
+                `adb shell pm get-app-links com.resumemaster.android`. Setting the host first only
+                moves the failure somewhere harder to see.
+
+                Nothing depends on this filter today: LinkedInAuthManager.startImport opens a
+                Custom Tab and the callback is delivered to the same task, so the import path does
+                not need the deep link to be verified.
+            -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
