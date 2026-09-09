@@ -4,8 +4,15 @@ package com.resumemaster.android.data.contract
  * What an ATS score is allowed to say on a phone.
  *
  * A MIRROR of shared/atsBands.js in the desktop repo, which is the single definition. The cutpoints
- * are duplicated here because a native client cannot import JavaScript, and
- * AtsBandsContractTest pins them against the contract text so the two cannot drift silently.
+ * are duplicated here because a native client cannot import JavaScript, and they are pinned so the
+ * two cannot drift silently: ContractJobDecodeTest asserts the cutpoints, the gate's independence
+ * from the Strong band, and that no label renders the number; ContractDriftTest asserts the
+ * contract still marks matchScore internal, which is the reason the band exists at all.
+ *
+ * There is no AtsBandsContractTest. This comment named one until the mobile corruption sweep went
+ * looking for it — the behaviour was covered the whole time, by the two classes above, but a name
+ * that resolves to nothing reads as a missing guard to the next person who greps for it, and this
+ * project has already shipped four guards that were inert for real.
  *
  * ── WHY THE NUMBER IS NOT ON SCREEN ─────────────────────────────────────────────────────────────
  *
