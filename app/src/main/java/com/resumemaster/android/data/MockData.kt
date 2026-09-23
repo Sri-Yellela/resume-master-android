@@ -18,7 +18,7 @@ object MockData {
     val templates = listOf(Template("classic","Classic","#1B2A4A","serif","single"), Template("modern","Modern","#01696F","sans","split"), Template("minimal","Minimal","#7A7974","sans","single"), Template("executive","Executive","#D19900","serif","two-column"), Template("creative","Creative","#01696F","sans","split"), Template("technical","Technical","#437A22","mono","two-column"))
     val defaultResume = Resume(name="Sri Yellela", templateID="modern", sections=listOf(
         ResumeSection(title="Summary", order=0, fields=listOf(ResumeField(label="Profile", value="Android and full-stack engineer building reliable, polished product experiences.", isBold=true))),
-        ResumeSection(title="Experience", order=1, fields=listOf(ResumeField(label="Resume Master", value="Built cross-platform resume workflows, job queues, ATS scoring, and export tooling."))),
+        ResumeSection(title="Experience", order=1, fields=listOf(ResumeField(label="Draft", value="Built cross-platform resume workflows, job queues, ATS scoring, and export tooling."))),
         ResumeSection(title="Projects", order=2, fields=listOf(ResumeField(label="Mobile Apps", value="Shipped native iOS and Android companion apps with shared models and sync protocol."))),
         ResumeSection(title="Skills", order=3, fields=listOf(ResumeField(label="Languages", value="Kotlin, Swift, JavaScript, SQL"), ResumeField(label="Tools", value="Jetpack Compose, SwiftUI, Node, SQLite"))),
         ResumeSection(title="Education", order=4, fields=listOf(ResumeField(label="Northeastern University", value="Computer Science"))),

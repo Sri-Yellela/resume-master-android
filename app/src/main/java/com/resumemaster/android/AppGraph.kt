@@ -21,7 +21,7 @@ import kotlinx.coroutines.SupervisorJob
  *
  * ── WHY THE BASE URL IS RESOLVED HERE AND ONLY HERE ─────────────────────────────────────────────
  *
- * The old repository hardcoded `https://resumemaster.one` and carried the emulator loopback address
+ * The old repository hardcoded the production origin and carried the emulator loopback address
  * in a comment beside it — which could not have worked anyway, because it cast the connection to
  * HttpsURLConnection. One resolution point means a debug build can reach the developer's machine
  * without any call site knowing.

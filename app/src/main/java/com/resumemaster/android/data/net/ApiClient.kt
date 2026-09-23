@@ -41,7 +41,8 @@ class ApiClient(
 ) {
 
   companion object {
-    const val DEFAULT_BASE_URL = "https://resumemaster.one"
+    /** The one origin this app talks to. Bare apex, no www — see docs/BRAND.md. */
+    const val DEFAULT_BASE_URL = "https://jobsviadraft.com"
 
     /**
      * 10.0.2.2 is the host loopback as seen from inside the emulator. NOT 127.0.0.1, which is the

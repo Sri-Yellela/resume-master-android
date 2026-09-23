@@ -10,7 +10,7 @@
 
   The exemption is scoped to the single loopback address and does NOT include subdomains, so it
   cannot silently widen. cleartextTrafficPermitted stays false everywhere else, including for
-  resumemaster.one, and the release build has no override at all.
+  jobsviadraft.com, and the release build has no override at all.
 -->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">

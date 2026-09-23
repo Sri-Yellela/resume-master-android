@@ -1,5 +1,63 @@
 # Android Phase 2a — toolchain, auth, API layer, persistence
 
+✅ **Phase 2a itself is COMPLETE** — all four steps landed and verified on a real emulator,
+40 JVM + 13 instrumented tests. See `../resume-master/docs/aj2-android-phase2a.md`.
+The prompt below is reference only. **Two items remain, both new:**
+
+---
+
+## ✅ OWNER DECISION — admin panel: BUILD FLAVOUR (decided 2026-09-05)
+
+The six admin screens are **not deleted**. They move behind a build flavour so the UI survives for
+internal builds and can never reach a Play Store release.
+
+```
+1. Put ui/admin/ (Dashboard, Users, Jobs, Queue, Flags, Analytics) behind a build flavour —
+   `internal` includes them, `release`/`play` excludes them. SOURCE-SET separation, not a runtime
+   flag: a runtime flag still ships the code and the strings, and a flag can be flipped.
+2. Remove the admin entry point from ProfileScreen in the release flavour. It is currently a
+   tappable row beside a hardcoded "Admin • Pro" label, reachable by every user, with no auth to
+   gate against.
+3. NavGraph admin routes must not exist in the release flavour. Absent beats 404, and 404 beats
+   rendering fabricated data.
+4. ⛔ The destructive controls stay DEAD in BOTH flavours until they reach a real server:
+   "Delete", "Suspend", "Impersonate read-only". They currently mutate a local MutableStateFlow and
+   look like they work. Do NOT wire them here — an internal build that appears to delete a user and
+   does not is worse than one with the buttons removed.
+5. VERIFY BY BUILDING THE RELEASE FLAVOUR and grepping the bundle: no admin class, no admin string
+   resource, no admin route. Then build `internal` and confirm the screens still render. A flavour
+   that excludes the source but leaves strings in the release bundle is a half-fix a reviewer finds.
+```
+
+---
+
+## ⛔ BACKUP EXCLUDES — user data is on device NOW
+
+```
+android:allowBackup="true" with backup_rules.xml and data_extraction_rules.xml both still the
+UNTOUCHED Studio templates (comments only). This was flagged as "write the excludes BEFORE the first
+token exists". The token now exists — and so does a persisted résumé, since Room landed.
+
+Both are currently swept into Google cloud backup by default.
+
+1. Write real excludes in BOTH files — they cover different mechanisms (Auto Backup vs Android 12+
+   device-to-device transfer) and filling only one leaves the other open.
+2. Exclude the auth token store (EncryptedSharedPreferences / DataStore) and the Room database
+   holding the résumé. A résumé carries a home address, phone and employment history.
+3. Consider android:allowBackup="false" outright. Decide deliberately: backup is a real convenience
+   for a résumé builder, so excludes are probably better than a blanket off — but state which you
+   chose and why.
+4. This feeds the Play Data Safety declaration, which must not contradict the live policy at
+   https://jobsviadraft.com/privacy. If the token is backed up, that is a disclosable data flow.
+
+VERIFY: trigger a backup and restore on an emulator and confirm the token and résumé do NOT come
+back. Inspecting the XML is not sufficient — these rules fail quietly when the path is wrong.
+```
+
+---
+
+## Phase 2a — original prompt (COMPLETE, reference only)
+
 Phase 1 (audit) is complete and accepted. This is Phase 2a only.
 
 **Backend repo:** `../resume-master` (sibling directory). Contract at
@@ -165,7 +223,7 @@ No keystore, no `signingConfigs`, `isMinifyEnabled = false` on release, no Play 
 Data Safety declaration, no privacy-policy link, `versionCode` never incremented, default Android
 Studio launcher icon, and the `YOUR_DOMAIN.com` deep-link host with `autoVerify="true"`.
 
-Data Safety must be authored against the live policy at `https://resumemaster.one/privacy` and must
+Data Safety must be authored against the live policy at `https://jobsviadraft.com/privacy` and must
 not contradict it.
 
 ---

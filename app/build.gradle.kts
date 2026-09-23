@@ -5,11 +5,17 @@ plugins {
 }
 
 android {
+    // The Kotlin package root, NOT the store identity. docs/BRAND.md keeps internal module
+    // names as they are; renaming this would rewrite the package line of every file in the
+    // repo and change nothing a user or a store can see.
     namespace = "com.resumemaster.android"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.resumemaster.android"
+        // ⛔ IMMUTABLE AFTER FIRST PUBLISH, and this app is not published. Decided in
+        // docs/BRAND.md. ⚠ Availability in the Play Store was NOT verified from here and must
+        // be checked before first publish; the fallback is com.jobsviadraft.android.
+        applicationId = "com.draft.android"
         minSdk = 28
         targetSdk = 35
         versionCode = 1

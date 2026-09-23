@@ -9,8 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.resumemaster.android.R
 import com.resumemaster.android.ui.theme.*
 import com.resumemaster.android.viewmodel.AuthViewModel
 
@@ -39,7 +41,9 @@ fun LoginScreen(vm: AuthViewModel = viewModel(), onSignedIn: () -> Unit) {
     verticalArrangement = Arrangement.Center,
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
-    Text("Resume Master", style = DisplayLarge, color = MaterialTheme.colorScheme.onSurface)
+    // The brand comes from the string resource, which is also what the launcher shows. Two
+    // places spelling the app's own name differently is how a rebrand half-lands.
+    Text(stringResource(R.string.app_name), style = DisplayLarge, color = MaterialTheme.colorScheme.onSurface)
     Spacer(Modifier.height(8.dp))
     Text("Sign in to load your board.", style = BodyMedium, color = TextMuted)
     Spacer(Modifier.height(28.dp))
