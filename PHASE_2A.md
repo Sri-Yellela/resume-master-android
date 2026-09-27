@@ -1,7 +1,7 @@
 # Android Phase 2a — toolchain, auth, API layer, persistence
 
 ✅ **Phase 2a itself is COMPLETE** — all four steps landed and verified on a real emulator,
-40 JVM + 13 instrumented tests. See `../resume-master/docs/aj2-android-phase2a.md`.
+40 JVM + 13 instrumented tests. See `../draft/docs/aj2-android-phase2a.md`.
 The prompt below is reference only. **Two items remain, both new:**
 
 ---
@@ -60,8 +60,8 @@ back. Inspecting the XML is not sufficient — these rules fail quietly when the
 
 Phase 1 (audit) is complete and accepted. This is Phase 2a only.
 
-**Backend repo:** `../resume-master` (sibling directory). Contract at
-`../resume-master/contract/mobile-api.v1.json`, currently **v1.1.0**.
+**Backend repo:** `../draft` (sibling directory). Contract at
+`../draft/contract/mobile-api.v1.json`, currently **v1.1.0**.
 
 ---
 

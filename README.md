@@ -32,5 +32,5 @@ Build → Generate Signed Bundle → Android App Bundle
 Upload to Play Console → Internal Testing → Production
 
 ## Related Repos
-- [Draft Web](https://github.com/Sri-Yellela/resume-master)
+- [Draft Web](https://github.com/Sri-Yellela/draft)
 - [Draft iOS](https://github.com/Sri-Yellela/resume-master-ios)

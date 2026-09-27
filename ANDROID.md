@@ -1,7 +1,7 @@
 # Android — living work doc
 
-**Repo:** `resume-master-android` · **Backend:** `../resume-master` ·
-**Contract:** `../resume-master/contract/mobile-api.v1.json` (read the version from the file)
+**Repo:** `resume-master-android` · **Backend:** `../draft` ·
+**Contract:** `../draft/contract/mobile-api.v1.json` (read the version from the file)
 
 **Last reconciled:** 2026-09-07.
 
@@ -16,7 +16,7 @@
 | Phase | State |
 |---|---|
 | **Phase 1** — audit | ✅ DONE. Findings folded into this doc |
-| **Phase 2a** — toolchain · auth · API layer · persistence | ✅ DONE — 40 JVM + 13 instrumented tests, real emulator. `../resume-master/docs/aj2-android-phase2a.md` |
+| **Phase 2a** — toolchain · auth · API layer · persistence | ✅ DONE — 40 JVM + 13 instrumented tests, real emulator. `../draft/docs/aj2-android-phase2a.md` |
 | **Phase 2b1** — admin build flavour | **OPEN** |
 | **Phase 2b2** — backup excludes | **OPEN** — user data is on device now |
 | **Phase 2c** — swipe feed | OPEN, blocked on 2b |
