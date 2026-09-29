@@ -88,6 +88,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.json)
+    // Dispatchers.setMain, so a ViewModel's viewModelScope can run on the JVM. The ViewModel tests
+    // drive the real JobRepository/ApiClient against a local HTTP server rather than a fake.
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

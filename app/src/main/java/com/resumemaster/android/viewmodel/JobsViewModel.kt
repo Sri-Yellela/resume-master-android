@@ -46,6 +46,20 @@ class JobsViewModel(
   val queue = mutableListOf<Job>()
   val starred = mutableListOf<Job>()
 
+  /**
+   * Every job the user has already decided on this session, whatever the action.
+   *
+   * THE VISIBLE STACK IS DERIVED, not copied. The repository accumulates every page it has fetched;
+   * the stack is that list MINUS what has been swiped. This used to be two lists that did not meet:
+   * onSwipe removed the card from `_jobs` locally, and the next successful page replaced `_jobs`
+   * wholesale with the repository's list -- so every card swiped since launch came back to the top
+   * of the stack the moment page 2 arrived. JobsViewModelTest pins it.
+   *
+   * Deliberately NOT cleared by setFilters: a card already decided on stays decided under a new
+   * filter set for the rest of the session.
+   */
+  private val decided = mutableSetOf<String>()
+
   private var filters = JobFilters()
 
   init {
@@ -68,7 +82,7 @@ class JobsViewModel(
     viewModelScope.launch {
       val result = repository.feed(filters)
       result
-        .onSuccess { _jobs.value = repository.uiJobs.value; _error.value = null }
+        .onSuccess { _jobs.value = repository.uiJobs.value.filterNot { it.id in decided }; _error.value = null }
         .onFailure { _error.value = it.message }
       _loading.value = false
     }
@@ -89,6 +103,7 @@ class JobsViewModel(
 
     // Advance the stack. The card leaves the screen immediately; the server write, if any, races
     // behind it and reconciles in the repository.
+    decided += job.id
     _jobs.value = _jobs.value.filterNot { it.id == job.id }
 
     // Fetch the next page BEFORE the stack empties, so the user never sees an empty board while a
