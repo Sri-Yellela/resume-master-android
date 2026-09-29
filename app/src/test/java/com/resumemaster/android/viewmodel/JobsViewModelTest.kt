@@ -118,5 +118,11 @@ class JobsViewModelTest {
     // SwipeAction, the second Queue was Queue == Queue: no emission, ActionBadge's LaunchedEffect
     // key did not change, and the second swipe got no "Queued for review" at all.
     assertNotEquals("the second swipe must be a new value, or the badge never sees it", first, second)
+
+    // The second swipe left three cards, which fires the page-2 prefetch. Let it land before
+    // tearDown resets Dispatchers.Main: a fetch resuming on Main mid-reset fails the run with
+    // "Dispatchers.Main is used concurrently with setting it" -- a harness race, seen once, that
+    // says nothing about the code under test.
+    awaitIdle(vm, pagesRequested = 2)
   }
 }
