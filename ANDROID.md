@@ -3,7 +3,9 @@
 **Repo:** `resume-master-android` · **Backend:** `../draft` ·
 **Contract:** `../draft/contract/mobile-api.v1.json` (read the version from the file)
 
-**Last reconciled:** 2026-09-07.
+**Last reconciled:** 2026-09-07. Status rows 2b2 and 2c and "Findings to carry forward" corrected
+2026-09-29 by the corruption sweep (`docs/CORRUPTION_SWEEP_ANDROID.md`) — they were claims the code
+had already overtaken.
 
 > ⚠ **Re-derive state from the repo before starting anything.** The desktop equivalent of this doc
 > has been the stale thing three times — agents land work faster than a doc gets updated. Check
@@ -18,8 +20,8 @@
 | **Phase 1** — audit | ✅ DONE. Findings folded into this doc |
 | **Phase 2a** — toolchain · auth · API layer · persistence | ✅ DONE — 40 JVM + 13 instrumented tests, real emulator. `../draft/docs/aj2-android-phase2a.md` |
 | **Phase 2b1** — admin build flavour | **OPEN** |
-| **Phase 2b2** — backup excludes | **OPEN** — user data is on device now |
-| **Phase 2c** — swipe feed | OPEN, blocked on 2b |
+| **Phase 2b2** — backup excludes | **PARTLY DONE** — the token store (`rm_secure_prefs.xml`) is excluded from BOTH channels in `backup_rules.xml` and `data_extraction_rules.xml`. The résumé database is deliberately still backed up, which contradicts step 2 below: **owner decision**. Never verified by a real backup/restore |
+| **Phase 2c** — swipe feed | **PARTLY LANDED**, not blocked: `GET /api/jobs` with cursor paging and restart-on-filter-change, `/api/jobs/interact`, the ATS band chip, server-side `tiers_include`. Missing: left is Skip (local-only, returns next launch), not a pass — `Dislike` has no gesture; tap expands, there is no detail view; no filter UI (`setFilters` has zero callers) |
 | **Phase 2d** — review queue | OPEN, blocked on 2c |
 | **Store readiness** | OPEN — nothing signed, no Data Safety declaration |
 
@@ -80,6 +82,10 @@ builds and can never reach a Play release.
 ```
 
 ## OPEN 2b2 — Backup excludes
+
+> ⚠ **The first paragraph below is stale** (checked 2026-09-29). Both XML files now exclude
+> `rm_secure_prefs.xml`; the résumé database is intentionally NOT excluded (see the comment in
+> `backup_rules.xml`), which is the open owner decision against step 2. VERIFY has not been done.
 
 ```
 android:allowBackup="true" with backup_rules.xml AND data_extraction_rules.xml both still the
@@ -160,8 +166,12 @@ many obstacles block one — the desktop panel learned this the hard way.
 
 ## Findings to carry forward
 
-**Two base URLs, one fake.** `LinkedInAuthManager.kt:27` and the `AndroidManifest` deep-link host
-both point at `https://YOUR_DOMAIN.com`, while `JobRepository` uses `https://jobsviadraft.com`.
+**Two base URLs, one fake — half fixed.** `LinkedInAuthManager` now reads `AppGraph.baseUrl`
+(`c40b343`); every request resolves through `ApiClient.DEFAULT_BASE_URL` /
+`EMULATOR_HOST_BASE_URL`. The `AndroidManifest` deep-link host is still `YOUR_DOMAIN.com`, by design
+until `https://jobsviadraft.com/.well-known/assetlinks.json` is served (see the manifest comment).
+The LinkedIn import behind it is broken server-side too — the callback never carries the parameters
+the app parses.
 
 **The shared-repository bug (fixed in 2a, worth remembering).** `ResumeViewModel` built its own
 repository and `viewModel()` scopes to the `NavBackStackEntry`, so builder and preview each held a
@@ -172,8 +182,8 @@ the mock résumé to a file the user then shared.** Now shared via `AppGraph`.
 delete the user's résumé on the first schema change." Omitting it throws loudly in development
 instead. Do not add it.
 
-**README claims Phase 1 disproved** — fix them as you touch them: "full admin panel" (6 MockData
-screens), "Swipe-card job feed" (10 hardcoded fixtures at the time), "Velocity-sensitive card stack"
-(false on Android — `resolve()` read displacement only and `MIN_VELOCITY = 800f` was declared and
-never referenced; **it is genuinely true on iOS**, so do not carry the finding across).
-`SYNC.md` marks Android columns for auth, application tracking and auto-apply queue.
+**README claims Phase 1 disproved — corrected 2026-09-29.** "full admin panel" (6 MockData
+screens), "Velocity-sensitive card stack" (false on Android — `resolve()` read displacement only and
+`MIN_VELOCITY = 800f` was declared and never referenced; the constant is now deleted, `dbb1970`;
+**it is genuinely true on iOS**, so do not carry the finding across). "Swipe-card job feed" is now
+true — it is the live board. `SYNC.md`'s Android column was rewritten against the code the same day.

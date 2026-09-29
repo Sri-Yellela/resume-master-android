@@ -33,6 +33,11 @@ internal builds and can never reach a Play Store release.
 
 ## ⛔ BACKUP EXCLUDES — user data is on device NOW
 
+> ⚠ **Partly done; the premise below is stale** (checked 2026-09-29). `backup_rules.xml` and
+> `data_extraction_rules.xml` both exclude the token store `rm_secure_prefs.xml` from every channel.
+> The résumé database is deliberately NOT excluded — an owner decision against step 2 — and the
+> backup/restore VERIFY has never been run. Status lives in `ANDROID.md` (2b2).
+
 ```
 android:allowBackup="true" with backup_rules.xml and data_extraction_rules.xml both still the
 UNTOUCHED Studio templates (comments only). This was flagged as "write the excludes BEFORE the first
@@ -186,8 +191,9 @@ Replace the hand-rolled `JobRepository` parser. Do not patch it.
   `limit` and `remaining`. **Render `remaining`; never swallow it.**
 - `sourcePlatform` is a trap — it looks like the ATS name and is not. Use `automationTier` for
   anything user-facing.
-- **`CHECKSUMS.json` hashing is LF-normalised on purpose** — the desktop repo runs
-  `core.autocrlf=true` while this repo is CRLF. A raw-byte verify here fails spuriously.
+- **`CHECKSUMS.json` hashing is LF-normalised on purpose** — both repos store LF (`* text=auto`)
+  and a Windows checkout materialises CRLF, so a raw-byte verify would pass or fail by the clone's
+  OS. (This line used to say "this repo is CRLF"; neither repo is, in the object store.)
 
 ## 4 · Resume persistence
 
