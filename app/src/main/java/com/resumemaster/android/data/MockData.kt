@@ -16,7 +16,14 @@ object MockData {
         Job(company="Canva", role="Android Design Tools Engineer", location="Austin, TX", salary="$130k-$180k", tags=listOf("Compose","Graphics","Templates"), matchScore=81, logoColor="#00C4CC", description="Create delightful mobile design tooling with template previews, export flows, and rich editing controls.")
     )
     val templates = listOf(Template("classic","Classic","#1B2A4A","serif","single"), Template("modern","Modern","#01696F","sans","split"), Template("minimal","Minimal","#7A7974","sans","single"), Template("executive","Executive","#D19900","serif","two-column"), Template("creative","Creative","#01696F","sans","split"), Template("technical","Technical","#437A22","mono","two-column"))
-    val defaultResume = Resume(name="Sri Yellela", templateID="modern", sections=listOf(
+    /**
+     * The template a resume with no (or an unknown) templateID renders in. It was spelled "modern" in
+     * three places -- here, TemplatesViewModel's own initial selection, and ResumePreviewScreen's
+     * fallback -- and the preview's `templates.first { ... }` THREW on an id not in this list.
+     */
+    const val DEFAULT_TEMPLATE_ID = "modern"
+    fun templateFor(id: String?): Template = templates.firstOrNull { it.id == id } ?: templates.first { it.id == DEFAULT_TEMPLATE_ID }
+    val defaultResume = Resume(name="Sri Yellela", templateID=DEFAULT_TEMPLATE_ID, sections=listOf(
         ResumeSection(title="Summary", order=0, fields=listOf(ResumeField(label="Profile", value="Android and full-stack engineer building reliable, polished product experiences.", isBold=true))),
         ResumeSection(title="Experience", order=1, fields=listOf(ResumeField(label="Draft", value="Built cross-platform resume workflows, job queues, ATS scoring, and export tooling."))),
         ResumeSection(title="Projects", order=2, fields=listOf(ResumeField(label="Mobile Apps", value="Shipped native iOS and Android companion apps with shared models and sync protocol."))),

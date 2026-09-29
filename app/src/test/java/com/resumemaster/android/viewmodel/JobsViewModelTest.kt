@@ -14,6 +14,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -99,5 +100,23 @@ class JobsViewModelTest {
     // It used to be replaced wholesale by the repository's accumulated list, so every card swiped
     // since launch reappeared at the top of the stack the moment page 2 landed.
     assertEquals(listOf("a3", "a4", "a5", "b1", "b2"), vm.jobs.value.map { it.id })
+  }
+
+  @Test
+  fun `two identical swipes in a row are two distinct confirmations`() {
+    val vm = viewModel()
+    awaitIdle(vm, pagesRequested = 1)
+
+    vm.onSwipe(SwipeAction.Queue, vm.jobs.value.first())
+    val first = vm.lastAction.value
+    vm.onSwipe(SwipeAction.Queue, vm.jobs.value.first())
+    val second = vm.lastAction.value
+
+    assertEquals(SwipeAction.Queue, first?.action)
+    assertEquals(SwipeAction.Queue, second?.action)
+    // A StateFlow does not emit a value equal to the one it holds. When lastAction was the bare
+    // SwipeAction, the second Queue was Queue == Queue: no emission, ActionBadge's LaunchedEffect
+    // key did not change, and the second swipe got no "Queued for review" at all.
+    assertNotEquals("the second swipe must be a new value, or the badge never sees it", first, second)
   }
 }

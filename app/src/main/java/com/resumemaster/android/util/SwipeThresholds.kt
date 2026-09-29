@@ -4,7 +4,7 @@ import com.resumemaster.android.models.SwipeAction
 import kotlin.math.abs
 
 object SwipeThresholds {
-    const val SOFT_OFFSET=80f; const val HARD_OFFSET=160f; const val MIN_VELOCITY=800f; const val ROTATION_FACTOR=0.04f; const val STACK_SCALE=0.04f; const val STACK_OFFSET=8f
+    const val SOFT_OFFSET=80f; const val HARD_OFFSET=160f; const val ROTATION_FACTOR=0.04f; const val STACK_SCALE=0.04f; const val STACK_OFFSET=8f
 
     /** Upward travel (px) past which a right-swipe is a Star. Negative y is up. */
     const val DIAGONAL_OFFSET=60f

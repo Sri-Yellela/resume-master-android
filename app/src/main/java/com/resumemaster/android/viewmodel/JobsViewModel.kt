@@ -25,6 +25,9 @@ import kotlinx.coroutines.launch
  * roughly sixty jobs; at about four cents a generation that is a bill of a couple of dollars from a
  * gesture that cost the user no thought. A right-swipe has to be free.
  */
+/** One swipe. `seq` exists only to make two identical swipes unequal; see `lastAction`. */
+data class SwipeEvent(val action: SwipeAction, val seq: Long)
+
 class JobsViewModel(
   private val repository: JobRepository = AppGraph.jobs,
 ) : ViewModel() {
@@ -33,8 +36,18 @@ class JobsViewModel(
   private val _jobs = MutableStateFlow<List<Job>>(emptyList())
   val jobs: StateFlow<List<Job>> = _jobs
 
-  private val _lastAction = MutableStateFlow<SwipeAction?>(null)
-  val lastAction: StateFlow<SwipeAction?> = _lastAction
+  /**
+   * The most recent swipe, as an EVENT rather than a value.
+   *
+   * It was the bare SwipeAction. A StateFlow drops an assignment equal to what it holds, so a second
+   * Queue after a first was Queue == Queue: no emission, ActionBadge's LaunchedEffect key unchanged,
+   * no confirmation for the second swipe. ActionBadge's `onDismiss` — the callback that could have
+   * reset it — was never passed by anyone (Shape 2: a handler wired to nothing). `seq` makes every
+   * swipe a distinct value, so every swipe confirms and each one restarts the badge's timer.
+   */
+  private var swipeSeq = 0L
+  private val _lastAction = MutableStateFlow<SwipeEvent?>(null)
+  val lastAction: StateFlow<SwipeEvent?> = _lastAction
 
   private val _error = MutableStateFlow<String?>(null)
   val error: StateFlow<String?> = _error
@@ -99,7 +112,7 @@ class JobsViewModel(
       SwipeAction.Dislike -> write(job, Interaction(disliked = true))
       SwipeAction.Skip -> Unit
     }
-    _lastAction.value = action
+    _lastAction.value = SwipeEvent(action, ++swipeSeq)
 
     // Advance the stack. The card leaves the screen immediately; the server write, if any, races
     // behind it and reconciles in the repository.
