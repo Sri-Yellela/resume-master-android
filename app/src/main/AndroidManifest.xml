@@ -31,9 +31,15 @@
                 assetlinks.json must name too — not the Kotlin package, which is still
                 com.resumemaster.android and is not what Android checks.
 
-                Nothing depends on this filter today: LinkedInAuthManager.startImport opens a
-                Custom Tab and the callback is delivered to the same task, so the import path does
-                not need the deep link to be verified.
+                THIS FILTER IS THE ONLY WAY BACK INTO THE APP for the LinkedIn import. (This comment
+                used to say nothing depended on it; that was wrong.) A Custom Tab navigating to an
+                https URL reaches MainActivity only through a matching filter, and with this host
+                nothing matches, so LinkedInAuthManager.handleAuthCallback never receives an intent.
+                It would not help if it did: the server's /auth/:provider/callback redirects to
+                returnTo with authContext / oauthProvider / oauthStatus and never emits the
+                `linkedin_import` and `data` parameters the app parses, and it ignores
+                `source=android`. The import is broken on BOTH sides and needs a server change
+                first - see docs/CORRUPTION_SWEEP_ANDROID.md, Shape 1.
             -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />

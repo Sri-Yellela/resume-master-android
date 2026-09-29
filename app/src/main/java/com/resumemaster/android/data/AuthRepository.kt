@@ -95,8 +95,10 @@ class AuthRepository(
 
         tokenStore.save(
           token = durableToken,
-          // Falls back to the contract's documented 90 days if the server omits it. Zero would
-          // make token() treat the credential as instantly expired.
+          // Falls back to the contract's documented 90 days if the server omits it. NOTE the
+          // direction a zero fails in: SecureTokenStore.token() only enforces the absolute window
+          // when absoluteSeconds > 0, so a server-sent 0 makes the credential NEVER expire locally
+          // (fail-open), not "instantly expired" as this comment used to say.
           absoluteSeconds = exchangeJson.optLong("absoluteSeconds", 7_776_000L),
         )
 

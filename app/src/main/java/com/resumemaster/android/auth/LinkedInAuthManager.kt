@@ -13,8 +13,15 @@ import org.json.JSONObject
  * Uses Chrome Custom Tabs (secure, no WebView)
  * Scopes: openid profile email
  *
- * The server handles LinkedIn OIDC and redirects back with mapped name/email.
  * The app never stores a LinkedIn access token.
+ *
+ * ⚠ NOT WORKING, AND NOT FIXABLE FROM THIS REPO (checked 2026-09-29 against ../draft/server.js).
+ * This header used to say "the server ... redirects back with mapped name/email". It does not.
+ * /auth/:provider is the server's OAuth LOGIN start: it ignores `source=android`, and its callback
+ * redirects to `returnTo` (default /app) with authContext, oauthProvider and oauthStatus. Nothing
+ * on the server emits `linkedin_import` or `data`, so handleAuthCallback below returns null for
+ * every real callback. And the callback could not reach the app anyway: the manifest's deep-link
+ * host is still the YOUR_DOMAIN.com placeholder. Needs a mobile import endpoint server-side first.
  */
 
 data class LinkedInResumeFields(
