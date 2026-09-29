@@ -20,6 +20,15 @@ import org.junit.Test
  * These run on the JVM with a REAL org.json on the test classpath (see app/build.gradle.kts). The
  * org.json in android.jar is a stub that returns null and throws, so without that dependency every
  * assertion here would pass or fail for reasons unrelated to the decoder.
+ *
+ * ⚠ "REAL" MEANS MAVEN'S org.json, WHICH IS NOT THE ONE ON THE PHONE. A device runs AOSP's
+ * libcore implementation, and the two disagree on exactly the case these tests care most about:
+ * `optString(key, fallback)` on an EXPLICIT JSON null returns `fallback` here and the four-character
+ * string "null" on Android (AOSP's JSON.toString(JSONObject.NULL) is String.valueOf -> "null"; read
+ * from the source, not measured on a device). So a green run here says nothing about optString on
+ * a nullable key. The decoder is safe only because every nullable field goes through
+ * optStringOrNull, which tests isNull() BEFORE optString -- keep it that way, and do not add a
+ * bare optString(key, "") for any key the contract types as `[string, null]`.
  */
 class ContractJobDecodeTest {
 

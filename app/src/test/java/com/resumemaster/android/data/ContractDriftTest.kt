@@ -36,8 +36,12 @@ class ContractDriftTest {
     val sums = JSONObject(File(repoRoot(), "contract/CHECKSUMS.json").readText(Charsets.UTF_8))
     val expected = sums.getJSONObject("files").getString("mobile-api.v1.json")
 
-    // LF-normalised ON PURPOSE. This repo is CRLF while the desktop repo runs core.autocrlf=true,
-    // so a raw-byte verify fails spuriously here -- and a check that cries wolf gets deleted.
+    // LF-normalised ON PURPOSE. Both repositories store this file LF (`* text=auto`) and
+    // materialise the platform convention on checkout, so on a Windows clone the working copy is
+    // CRLF (measured 2026-09-29: `git ls-files --eol` reads i/lf w/crlf here and in ../draft) and on
+    // a POSIX clone it is LF. A raw-byte verify would therefore pass or fail by operating system
+    // -- and a check that cries wolf gets deleted. (This comment used to say "this repo is CRLF
+    // while the desktop repo runs autocrlf"; neither repo is CRLF in the object store.)
     val normalised = contractFile.readBytes()
       .toString(Charsets.UTF_8)
       .replace("\r\n", "\n")
