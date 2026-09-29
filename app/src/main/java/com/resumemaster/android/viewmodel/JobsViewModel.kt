@@ -76,6 +76,12 @@ class JobsViewModel(
   private var filters = JobFilters()
 
   init {
+    // A NEW BOARD STARTS FROM PAGE 1. The repository is AppGraph's process-wide singleton and
+    // outlives a sign-out; this ViewModel is scoped to the jobs destination, which a sign-out pops.
+    // Without the restart the next sign-in continued the previous session's feed -- its cursor,
+    // appended to its accumulated rows -- so whoever signed in next was served the last user's
+    // board. A retained ViewModel (tab switch, rotation) does not re-run this.
+    repository.restart()
     loadMore()
   }
 

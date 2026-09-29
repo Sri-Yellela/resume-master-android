@@ -40,12 +40,20 @@ class AuthViewModel(
   }
 
   fun signOut() {
+    if (_state.value.busy) return
+    _state.value = _state.value.copy(busy = true, error = null)
     viewModelScope.launch {
       repository.signOut()
-      // Signed out locally regardless of what the server said -- SecureTokenStore.clear() has
-      // already run inside signOut(). Reflecting anything else here would show a signed-in UI with
-      // no credential behind it.
-      _state.value = AuthUiState(signedIn = false)
+        .onSuccess {
+          // Signed out whatever the SERVER said: the local credential is gone, which is the half
+          // the user asked for and the half that must not depend on connectivity.
+          _state.value = AuthUiState(signedIn = false)
+        }
+        .onFailure { e ->
+          // The credential is STILL ON THIS DEVICE. This used to set signedIn=false regardless,
+          // so the UI said "signed out" over a live token (Shape 3). Stay signed in and say why.
+          _state.value = _state.value.copy(busy = false, signedIn = true, error = e.message)
+        }
     }
   }
 }

@@ -5,6 +5,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.resumemaster.android.AppGraph
 import com.resumemaster.android.ui.admin.*
@@ -17,4 +18,26 @@ import com.resumemaster.android.ui.profile.ProfileScreen
 import com.resumemaster.android.ui.resume.ResumeBuilderScreen
 import com.resumemaster.android.ui.templates.TemplatesScreen
 
-@Composable fun NavGraph(){ val nav=rememberNavController(); val start=if(AppGraph.tokenStore.hasToken()) "jobs" else "login"; val back by nav.currentBackStackEntryAsState(); val route=back?.destination?.route?:"jobs"; val showTabs=bottomTabs.any{it.route==route}; Scaffold(bottomBar={if(showTabs)BottomTabBar(route){target->nav.navigate(target){popUpTo(nav.graph.findStartDestination().id){saveState=true};launchSingleTop=true;restoreState=true}}}){padding-> NavHost(navController=nav,startDestination=start,modifier=Modifier.padding(padding)){ composable("login"){LoginScreen(onSignedIn={nav.navigate("jobs"){popUpTo("login"){inclusive=true}}})}; composable("jobs"){JobsScreen()}; composable("resume"){ResumeBuilderScreen()}; composable("templates"){TemplatesScreen()}; composable("profile"){ProfileScreen{nav.navigate("admin")}}; composable("preview"){ResumePreviewScreen()}; composable("admin"){AdminDashboardScreen(onBack={nav.popBackStack()},onNavigate={nav.navigate(it)})}; composable("admin/users"){AdminUsersScreen(onBack={nav.popBackStack()})}; composable("admin/jobs"){AdminJobsScreen(onBack={nav.popBackStack()})}; composable("admin/queue"){AdminQueueScreen(onBack={nav.popBackStack()})}; composable("admin/flags"){AdminFlagsScreen(onBack={nav.popBackStack()})}; composable("admin/analytics"){AdminAnalyticsScreen(onBack={nav.popBackStack()})} } } }
+@Composable fun NavGraph(){ val nav=rememberNavController(); val start=remember{startDestination()}; val back by nav.currentBackStackEntryAsState(); val route=back?.destination?.route?:"jobs"; val showTabs=bottomTabs.any{it.route==route}; Scaffold(bottomBar={if(showTabs)BottomTabBar(route){target->nav.navigate(target){popUpTo(nav.graph.findStartDestination().id){saveState=true};launchSingleTop=true;restoreState=true}}}){padding-> NavHost(navController=nav,startDestination=start,modifier=Modifier.padding(padding)){ composable("login"){LoginScreen(onSignedIn={nav.navigate("jobs"){popUpTo("login"){inclusive=true}}})}; composable("jobs"){JobsScreen()}; composable("resume"){ResumeBuilderScreen()}; composable("templates"){TemplatesScreen()}; composable("profile"){ProfileScreen(onAdmin={nav.navigate("admin")},onSignedOut={signedOut(nav)})}; composable("preview"){ResumePreviewScreen()}; composable("admin"){AdminDashboardScreen(onBack={nav.popBackStack()},onNavigate={nav.navigate(it)})}; composable("admin/users"){AdminUsersScreen(onBack={nav.popBackStack()})}; composable("admin/jobs"){AdminJobsScreen(onBack={nav.popBackStack()})}; composable("admin/queue"){AdminQueueScreen(onBack={nav.popBackStack()})}; composable("admin/flags"){AdminFlagsScreen(onBack={nav.popBackStack()})}; composable("admin/analytics"){AdminAnalyticsScreen(onBack={nav.popBackStack()})} } } }
+
+/**
+ * Leave every signed-in screen for sign-in, with nothing to go Back to.
+ *
+ * Popping the WHOLE graph, not just the current destination: Back from sign-in must not return to a
+ * board that has no credential behind it. The jobs destination is popped with it, so the next
+ * sign-in builds a new JobsViewModel, which restarts the shared feed (see JobsViewModel.init).
+ */
+private fun signedOut(nav: NavHostController) {
+  nav.navigate("login") { popUpTo(nav.graph.id) { inclusive = true } }
+}
+
+/**
+ * Read ONCE per NavGraph, not on every recomposition.
+ *
+ * It was an expression in the body, so it re-ran on every back-stack change: after a sign-in it
+ * flipped from "login" to "jobs", NavHost was handed a new graph, and the jobs destination was built
+ * a second time -- a second JobsViewModel and a second page-1 request (seen on the emulator as two
+ * identical GET /api/jobs per sign-in). It also meant a keystore read on the main thread per
+ * recomposition.
+ */
+private fun startDestination(): String = if (AppGraph.tokenStore.hasToken()) "jobs" else "login"

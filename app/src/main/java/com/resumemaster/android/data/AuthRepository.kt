@@ -5,6 +5,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
+/**
+ * A sign-out that DID remove the local credential. `serverRevoked` false means the server could
+ * not be told (offline, or it answered non-2xx); the token then lives on server-side until its own
+ * idle or absolute window closes, which is the documented best-effort half of sign-out.
+ */
+data class SignOutOutcome(val serverRevoked: Boolean)
+
 data class AuthedUser(val id: String, val username: String, val email: String, val name: String?)
 
 /**
@@ -93,7 +100,7 @@ class AuthRepository(
           return@withContext Result.failure(Exception("Token exchange returned no token."))
         }
 
-        tokenStore.save(
+        val stored = tokenStore.save(
           token = durableToken,
           // Falls back to the contract's documented 90 days if the server omits it. NOTE the
           // direction a zero fails in: SecureTokenStore.token() only enforces the absolute window
@@ -101,6 +108,14 @@ class AuthRepository(
           // (fail-open), not "instantly expired" as this comment used to say.
           absoluteSeconds = exchangeJson.optLong("absoluteSeconds", 7_776_000L),
         )
+        // The same rule as the failed exchange above: holding nothing durable is a FAILED sign-in.
+        // save()'s commit() result used to be discarded, so a token that never reached disk was
+        // reported as a successful sign-in and the next launch found no credential.
+        if (!stored) {
+          return@withContext Result.failure(
+            Exception("Signed in, but this device could not store the credential. Try again.")
+          )
+        }
 
         Result.success(
           AuthedUser(
@@ -122,17 +137,21 @@ class AuthRepository(
    * consent for this device to hold their credential, and honouring that must not depend on
    * connectivity. The server-side revoke is best-effort and keyed on
    * user_agent='resume-master-mobile', so it does not disturb the extension's independent token.
+   *
+   * The result is about THIS DEVICE, because that is what the user can act on. It used to be the
+   * server's answer, while the local clear's own result was discarded -- so a revoke that succeeded
+   * over a clear that did not reported success with the credential still on disk, and a revoke that
+   * failed over a clear that succeeded reported failure for a device that no longer held anything.
+   * Failure now means exactly one thing: the credential is still here.
    */
-  suspend fun signOut(): Result<Unit> = withContext(Dispatchers.IO) {
-    val outcome = try {
-      val response = authed.post("/api/auth/revoke-mobile-token")
-      if (response.isSuccess) Result.success(Unit)
-      else Result.failure(Exception("Server did not confirm revocation (${response.status})."))
-    } catch (e: Exception) {
-      Result.failure(e)
+  suspend fun signOut(): Result<SignOutOutcome> = withContext(Dispatchers.IO) {
+    val serverRevoked = try {
+      authed.post("/api/auth/revoke-mobile-token").isSuccess
+    } catch (_: Exception) {
+      false
     }
-    tokenStore.clear()
-    outcome
+    if (tokenStore.clear()) Result.success(SignOutOutcome(serverRevoked))
+    else Result.failure(Exception("Could not remove your sign-in from this device. Try again."))
   }
 
   private fun errorMessageOf(body: String, fallback: String): String = try {

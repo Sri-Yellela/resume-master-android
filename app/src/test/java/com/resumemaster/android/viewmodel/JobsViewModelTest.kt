@@ -103,6 +103,25 @@ class JobsViewModelTest {
   }
 
   @Test
+  fun `a new board starts from the first page, not from the previous session's cursor`() {
+    // AppGraph.jobs is a process-wide singleton, so it outlives a sign-out. The JobsViewModel for
+    // the next sign-in is new; the repository under it is not.
+    val client = ApiClient("http://127.0.0.1:${server.address.port}") { "test-token" }
+    val shared = JobRepository(client)
+    val first = JobsViewModel(shared)
+    awaitIdle(first, pagesRequested = 1)
+
+    // Sign out, sign in (possibly as someone else): the jobs destination is rebuilt.
+    val second = JobsViewModel(shared)
+    awaitIdle(second, pagesRequested = 2)
+
+    // It used to continue the FIRST session's feed: page 2 by the old cursor, appended to the old
+    // session's accumulated rows -- one user's board served to whoever signed in next.
+    assertTrue("the new board requested page 1: $requests", "cursor=" !in requests[1])
+    assertEquals(listOf("a1", "a2", "a3", "a4", "a5"), second.jobs.value.map { it.id })
+  }
+
+  @Test
   fun `two identical swipes in a row are two distinct confirmations`() {
     val vm = viewModel()
     awaitIdle(vm, pagesRequested = 1)
