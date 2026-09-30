@@ -111,6 +111,20 @@ back. Inspecting the XML is NOT sufficient — these rules fail quietly when a p
 
 ## OPEN 2c — Swipe feed (after 2b)
 
+⛔ **REVISED 09-30 — 2c is now the DECK**, per `../draft/docs/UI_REDESIGN.md` §3 and §5.2. The text
+block below is kept for its still-true constraints (cursor paging for "All jobs", `interact` not the
+toggles, the band not a number). What changes:
+
+- The feed is `GET /api/draft/today` — the day's FROZEN deal, shared with the web — not the paged board.
+- **Right = Draft on the server:** `POST /api/apply/runs`, `approvalMode` omitted, `surface:"deck"`.
+  ⛔ Today's right swipe (`Queue` / `QueuePriority`) records LOCAL intent only — it reaches no server,
+  is lost on restart, and its badge says "Queued for review". Until 2c lands the badge must say
+  what is true.
+- **Left = Pass** (saved; `8445e88`, unchanged). **Save = a button**, not the diagonal: the diagonal
+  Star and the hard-right "Queue first" are removed (two accident-prone motions, two intents, and
+  "Queue first" has no server meaning).
+- The finished-deck state links to 2d.
+
 ```
 Build against the contract, not against the old hand-rolled parser (replaced in 2a).
 
