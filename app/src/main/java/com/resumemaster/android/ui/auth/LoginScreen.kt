@@ -29,7 +29,7 @@ import com.resumemaster.android.viewmodel.AuthViewModel
  * a decision a UI should be able to influence.
  */
 @Composable
-fun LoginScreen(vm: AuthViewModel = viewModel(), onSignedIn: () -> Unit) {
+fun LoginScreen(vm: AuthViewModel = viewModel(), notice: String? = null, onSignedIn: () -> Unit) {
   val state by vm.state.collectAsState()
   var username by remember { mutableStateOf("") }
   var password by remember { mutableStateOf("") }
@@ -46,6 +46,12 @@ fun LoginScreen(vm: AuthViewModel = viewModel(), onSignedIn: () -> Unit) {
     Text(stringResource(R.string.app_name), style = DisplayLarge, color = MaterialTheme.colorScheme.onSurface)
     Spacer(Modifier.height(8.dp))
     Text("Sign in to load your board.", style = BodyMedium, color = TextMuted)
+    // Why the user is here when they did not sign out: the server ended the session. Without it a
+    // sign-in screen appearing mid-use reads as the app having lost their account.
+    if (notice != null && state.error == null) {
+      Spacer(Modifier.height(10.dp))
+      Text(notice, style = BodyMedium, color = MaterialTheme.colorScheme.error)
+    }
     Spacer(Modifier.height(28.dp))
 
     OutlinedTextField(

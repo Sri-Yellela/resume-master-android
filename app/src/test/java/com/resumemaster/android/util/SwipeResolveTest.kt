@@ -45,7 +45,8 @@ class SwipeResolveTest {
 
   @Test
   fun `left is skip regardless of vertical travel`() {
-    assertEquals(SwipeAction.Skip, SwipeThresholds.resolve(-soft, 0f))
-    assertEquals(SwipeAction.Skip, SwipeThresholds.resolve(-(hard + 1f), -(up * 5)))
+    // Left is the SAVED pass (owner, 09-29) — it was a local Skip, and the card came back.
+    assertEquals(SwipeAction.Dislike, SwipeThresholds.resolve(-soft, 0f))
+    assertEquals(SwipeAction.Dislike, SwipeThresholds.resolve(-(hard + 1f), -(up * 5)))
   }
 }

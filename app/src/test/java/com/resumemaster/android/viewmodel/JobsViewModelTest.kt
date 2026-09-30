@@ -26,7 +26,7 @@ import org.junit.Test
  * ViewModel's visible stack and the repository's accumulated list, and a fake repository is exactly
  * the thing that would have agreed with whichever side the test author had in mind.
  *
- * Only GET is exercised (Skip and Queue make no request). The desktop JDK's HttpURLConnection
+ * Only GET is exercised (Queue makes no request). The desktop JDK's HttpURLConnection
  * rejects PATCH, so Star/Dislike are deliberately not swiped here -- see ApiClient.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,6 +34,9 @@ class JobsViewModelTest {
 
   private lateinit var server: HttpServer
   private val requests = mutableListOf<String>()
+
+  /** What GET /api/jobs answers. 200 serves the two-page board below; anything else is an error. */
+  @Volatile private var feedStatus = 200
 
   private fun job(id: String) = JSONObject().put("id", id).put("title", "Role $id").put("company", "Co $id")
 
@@ -52,11 +55,12 @@ class JobsViewModelTest {
     server.createContext("/api/jobs") { ex ->
       val query = ex.requestURI.rawQuery.orEmpty()
       synchronized(requests) { requests += query }
-      val body = if ("cursor=c1" in query) page(listOf("b1", "b2"), null)
+      val body = if (feedStatus != 200) """{"error":"Not authenticated"}"""
+                 else if ("cursor=c1" in query) page(listOf("b1", "b2"), null)
                  else page(listOf("a1", "a2", "a3", "a4", "a5"), "c1")
       val bytes = body.toByteArray(Charsets.UTF_8)
       ex.responseHeaders.add("Content-Type", "application/json")
-      ex.sendResponseHeaders(200, bytes.size.toLong())
+      ex.sendResponseHeaders(feedStatus, bytes.size.toLong())
       ex.responseBody.use { it.write(bytes) }
     }
     server.start()
@@ -91,8 +95,8 @@ class JobsViewModelTest {
     assertEquals(listOf("a1", "a2", "a3", "a4", "a5"), vm.jobs.value.map { it.id })
 
     // Two swipes leave three cards, which is the prefetch threshold: the second swipe fetches page 2.
-    vm.onSwipe(SwipeAction.Skip, vm.jobs.value.first())
-    vm.onSwipe(SwipeAction.Skip, vm.jobs.value.first())
+    vm.onSwipe(SwipeAction.Queue, vm.jobs.value.first())
+    vm.onSwipe(SwipeAction.Queue, vm.jobs.value.first())
     awaitIdle(vm, pagesRequested = 2)
     assertTrue("page 2 was requested with the cursor", requests.any { "cursor=c1" in it })
 
@@ -100,6 +104,20 @@ class JobsViewModelTest {
     // It used to be replaced wholesale by the repository's accumulated list, so every card swiped
     // since launch reappeared at the top of the stack the moment page 2 landed.
     assertEquals(listOf("a3", "a4", "a5", "b1", "b2"), vm.jobs.value.map { it.id })
+  }
+
+  @Test
+  fun `a 401 on the feed forgets the credential and says the session expired`() {
+    feedStatus = 401
+    var cleared = 0
+    val client = ApiClient("http://127.0.0.1:${server.address.port}") { "expired-token" }
+    val vm = JobsViewModel(JobRepository(client)) { cleared++ }
+    awaitIdle(vm, pagesRequested = 1)
+
+    // It used to render "Could not load your board" and nothing else. hasToken() stayed true, so
+    // every launch started on a board that could not load, with no route back to sign-in.
+    assertTrue("the board must say the session is over", vm.sessionExpired.value)
+    assertEquals("and the dead credential must not be kept", 1, cleared)
   }
 
   @Test

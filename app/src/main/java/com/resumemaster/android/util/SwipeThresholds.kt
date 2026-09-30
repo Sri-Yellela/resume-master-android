@@ -20,6 +20,6 @@ object SwipeThresholds {
      *
      * Displacement only -- there is no velocity term (see README).
      */
-    fun resolve(x:Float,y:Float):SwipeAction?{ val ax=abs(x); if(ax<SOFT_OFFSET)return null; return if(x<0) SwipeAction.Skip else if(y < -DIAGONAL_OFFSET) SwipeAction.Star else if(ax>HARD_OFFSET) SwipeAction.QueuePriority else SwipeAction.Queue }
+    fun resolve(x:Float,y:Float):SwipeAction?{ val ax=abs(x); if(ax<SOFT_OFFSET)return null; return if(x<0) SwipeAction.Dislike else if(y < -DIAGONAL_OFFSET) SwipeAction.Star else if(ax>HARD_OFFSET) SwipeAction.QueuePriority else SwipeAction.Queue }
 }
 

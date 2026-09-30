@@ -146,8 +146,11 @@ class JobRepository(
 
         val response = client.patch("/api/jobs/interact", body.toString())
         if (!response.isSuccess) {
+          // A 401 is typed like the feed's, so the caller can tell "sign in again" from "retry".
+          val message = errorOf(response.body, "Could not save that (${response.status})")
           return@withContext Result.failure(
-            Exception(errorOf(response.body, "Could not save that (${response.status})"))
+            if (response.isUnauthorized) FeedException(FeedError.UNAUTHORIZED, message)
+            else Exception(message)
           )
         }
 

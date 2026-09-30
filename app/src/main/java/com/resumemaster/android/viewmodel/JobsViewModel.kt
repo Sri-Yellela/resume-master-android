@@ -6,6 +6,8 @@ import com.resumemaster.android.AppGraph
 import com.resumemaster.android.data.Interaction
 import com.resumemaster.android.data.JobFilters
 import com.resumemaster.android.data.JobRepository
+import com.resumemaster.android.data.contract.FeedError
+import com.resumemaster.android.data.contract.FeedException
 import com.resumemaster.android.models.Job
 import com.resumemaster.android.models.SwipeAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +32,30 @@ data class SwipeEvent(val action: SwipeAction, val seq: Long)
 
 class JobsViewModel(
   private val repository: JobRepository = AppGraph.jobs,
+  /** Forget this device's credential. Called when the server says it is no longer valid. */
+  private val clearCredential: () -> Unit = { AppGraph.tokenStore.clear() },
 ) : ViewModel() {
+
+  /**
+   * The server has said this device's credential is no longer valid (401: expired, revoked, or
+   * signed out elsewhere). The screen routes to sign-in on it.
+   *
+   * A 401 used to render as "Could not load your board" and nothing else. The token stayed on disk,
+   * hasToken() stayed true, and every launch started on a board that could not load, with no way
+   * back to sign-in (Shape 3 #3). The contract says a mobile client must treat a 401 as "sign in
+   * again".
+   */
+  private val _sessionExpired = MutableStateFlow(false)
+  val sessionExpired: StateFlow<Boolean> = _sessionExpired
+
+  private fun onFailure(e: Throwable) {
+    if ((e as? FeedException)?.kind == FeedError.UNAUTHORIZED) {
+      // Forget the dead credential BEFORE routing, so a relaunch lands on sign-in too.
+      clearCredential()
+      _sessionExpired.value = true
+    }
+    _error.value = e.message
+  }
 
   /** The visible stack. Swiped cards are removed locally; the server list is the repository's. */
   private val _jobs = MutableStateFlow<List<Job>>(emptyList())
@@ -102,7 +127,7 @@ class JobsViewModel(
       val result = repository.feed(filters)
       result
         .onSuccess { _jobs.value = repository.uiJobs.value.filterNot { it.id in decided }; _error.value = null }
-        .onFailure { _error.value = it.message }
+        .onFailure(::onFailure)
       _loading.value = false
     }
   }
@@ -115,8 +140,10 @@ class JobsViewModel(
         if (starred.none { it.id == job.id }) starred.add(job)
         write(job, Interaction(starred = true))
       }
+      // A left swipe (and the X button) is a SAVED pass — the owner's call, 09-29. It was a local
+      // Skip, so a passed card came back on the next launch; the server now excludes it from every
+      // feed query (user_jobs.disliked). Nothing else produced Dislike, which made it unreachable.
       SwipeAction.Dislike -> write(job, Interaction(disliked = true))
-      SwipeAction.Skip -> Unit
     }
     _lastAction.value = SwipeEvent(action, ++swipeSeq)
 
@@ -129,6 +156,9 @@ class JobsViewModel(
     // page is in flight.
     if (_jobs.value.size <= 3) loadMore()
   }
+
+  /** The screen has shown the current error (as a snackbar over a non-empty stack). */
+  fun errorShown() { _error.value = null }
 
   fun onButtonAction(action: SwipeAction) {
     _jobs.value.firstOrNull()?.let { onSwipe(action, it) }
@@ -144,7 +174,7 @@ class JobsViewModel(
   private fun write(job: Job, interaction: Interaction) {
     viewModelScope.launch {
       repository.interact(job.id, interaction)
-        .onFailure { _error.value = it.message }
+        .onFailure(::onFailure)
     }
   }
 }
