@@ -43,7 +43,12 @@ fun LoginScreen(vm: AuthViewModel = viewModel(), notice: String? = null, onSigne
   ) {
     // The brand comes from the string resource, which is also what the launcher shows. Two
     // places spelling the app's own name differently is how a rebrand half-lands.
-    Text(stringResource(R.string.app_name), style = DisplayLarge, color = MaterialTheme.colorScheme.onSurface)
+    // The redesigned mark — the web's and the extension's "/draft", like for like (09-30).
+    androidx.compose.foundation.Image(
+      painter = androidx.compose.ui.res.painterResource(R.drawable.brand_wordmark),
+      contentDescription = stringResource(R.string.app_name),
+      modifier = Modifier.height(48.dp),
+    )
     Spacer(Modifier.height(8.dp))
     Text("Sign in to load your board.", style = BodyMedium, color = TextMuted)
     // Why the user is here when they did not sign out: the server ended the session. Without it a

@@ -26,4 +26,4 @@ sealed class BadgeState{ data object Hidden:BadgeState(); data class Visible(val
  * What each action DID, said plainly. Right is a server-side Draft since the deck (DeckViewModel,
  * 09-30): previewed and held for the user's review — so "waits for your review", never "sent".
  */
-private fun meta(action:SwipeAction):Triple<Color,ImageVector,String> = when(action){ SwipeAction.Queue->Triple(Primary,Icons.Rounded.RadioButtonUnchecked,"Drafted — it waits for your review"); SwipeAction.Star->Triple(Gold,Icons.Rounded.Star,"Saved"); SwipeAction.Dislike->Triple(TextMuted,Icons.Rounded.HorizontalRule,"Passed — it won't come back") }
+@Composable private fun meta(action:SwipeAction):Triple<Color,ImageVector,String> = when(action){ SwipeAction.Queue->Triple(Primary,Icons.Rounded.RadioButtonUnchecked,"Drafted — it waits for your review"); SwipeAction.Star->Triple(Gold,Icons.Rounded.Star,"Saved"); SwipeAction.Dislike->Triple(TextMuted,Icons.Rounded.HorizontalRule,"Passed — it won't come back") }
