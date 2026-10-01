@@ -1458,7 +1458,7 @@
             "authContextHeader": []
           }
         ],
-        "x-mobile-notes": "SEND YOUR LOCAL DATE (?date=YYYY-MM-DD); the server accepts it within a day of its own, and the same date returns the same deck on every client — a card drafted on the phone reads as decided on the web. The deck is dealt from the board's own default order and is NEVER padded: `size` may be below 10 (reason 'thin') or 0 (reason 'empty'). Decide with the existing calls: Draft = POST /api/apply/runs with surface:'deck' and no approvalMode; Pass = PATCH /api/jobs/interact {disliked:true}; Save = {starred:true}. `decision` is read live from those. A card carries its band and never a score (job.matchScore is null).",
+        "x-mobile-notes": "SEND YOUR LOCAL DATE (?date=YYYY-MM-DD); the server accepts it within a day of its own, and the same date returns the same deck on every client — a card drafted on the phone reads as decided on the web. The deck is dealt from the board's own default order and is NEVER padded: `size` may be below 10 (reason 'thin') or 0 — reason 'empty' (nothing strong enough), 'no_profile' (a new account: set one up) or 'no_resume' (add one). Those are states to explain, never errors — a first Google sign-in creates an account in exactly that state. Decide with the existing calls: Draft = POST /api/apply/runs with surface:'deck' and no approvalMode; Pass = PATCH /api/jobs/interact {disliked:true}; Save = {starred:true}. `decision` is read live from those. A card carries its band and never a score (job.matchScore is null).",
         "parameters": [
           {
             "name": "date",
@@ -1496,16 +1496,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorUnauthorized"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The object does not exist OR is not yours. The two are deliberately indistinguishable on user-scoped routes — telling a stranger that an id exists is itself a disclosure.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorNotFound"
                 }
               }
             }
@@ -2513,7 +2503,7 @@
             "type": "boolean"
           }
         },
-        "description": "Today's frozen deal. Fewer than 10 is a thin day and 0 an empty one — never padded."
+        "description": "Today's frozen deal. Fewer than 10 is a thin day and 0 an empty one — never padded. `reason`: null | 'thin' | 'empty' | 'no_profile' | 'no_resume' — the last two are set-up states, not errors."
       },
       "DeckWhy": {
         "type": "object",
