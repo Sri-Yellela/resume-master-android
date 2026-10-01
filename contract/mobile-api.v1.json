@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Draft — Mobile API",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "description": "The contract between this repository and the two mobile repositories (iOS, Android), which are native clients over this JSON API and live outside this tree.\n\nGENERATED — DO NOT HAND-EDIT. Regenerate with `node scripts/generateMobileContract.mjs`. The Job schema is produced by EXECUTING services/jobs/mapJobRow.js, so it cannot disagree with what the server actually emits. test/mobileApiContract.test.js fails the build if this file and the source ever disagree.\n\nOnly the endpoints a swipe feed and a review flow need are published. Anything absent is absent on purpose and is not a promise — see x-retired for what a greenfield client must not call, and x-mobile-gaps for what mobile needs that this API does not yet expose."
   },
   "servers": [
@@ -813,7 +813,7 @@
             "authContextHeader": []
           }
         ],
-        "x-mobile-notes": "202 MEANS QUEUED, NOT SUBMITTED, and this is the single most dangerous thing for a mobile client to get wrong: showing 'Applied' here claims something that has not happened. By default the run PREVIEWS and parks in held_review for approval; nothing reaches an employer until POST /api/apply/approve. `queued` is the ids ACCEPTED — it is shorter than `jobIds` when duplicates were dropped, so report queued.length, never jobIds.length. Send Idempotency-Key: a retry on a flaky connection otherwise queues the run twice. approvalMode:'approved' is REJECTED with 400 — it is reserved for the approve endpoint, so no client can submit without previewing. Gate on automationTier before queueing at all (x-mobile-tier-gating).",
+        "x-mobile-notes": "202 MEANS QUEUED, NOT SUBMITTED, and this is the single most dangerous thing for a mobile client to get wrong: showing 'Applied' here claims something that has not happened. By default the run PREVIEWS and parks in held_review for approval; nothing reaches an employer until POST /api/apply/approve. `queued` is the ids ACCEPTED — it is shorter than `jobIds` when duplicates were dropped, so report queued.length, never jobIds.length. Send Idempotency-Key: a retry on a flaky connection otherwise queues the run twice. approvalMode:'approved' is REJECTED with 400 — it is reserved for the approve endpoint, so no client can submit without previewing. A DRAFT FROM THE DECK sends surface:'deck' and NO approvalMode; any approvalMode from that surface is a 400 approval_mode_forbidden_for_surface.  Gate on automationTier before queueing at all (x-mobile-tier-gating).",
         "parameters": [
           {
             "name": "Idempotency-Key",
@@ -846,6 +846,12 @@
                   },
                   "mode": {
                     "type": "string"
+                  },
+                  "surface": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "tool": {
                     "type": "string"
@@ -1430,6 +1436,86 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorNotFound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/draft/today": {
+      "get": {
+        "operationId": "getDraftToday",
+        "tags": [
+          "feed"
+        ],
+        "summary": "Today's deck: up to 10 Strong or Moderate jobs, dealt once per local day and frozen.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "authContextHeader": []
+          }
+        ],
+        "x-mobile-notes": "SEND YOUR LOCAL DATE (?date=YYYY-MM-DD); the server accepts it within a day of its own, and the same date returns the same deck on every client — a card drafted on the phone reads as decided on the web. The deck is dealt from the board's own default order and is NEVER padded: `size` may be below 10 (reason 'thin') or 0 (reason 'empty'). Decide with the existing calls: Draft = POST /api/apply/runs with surface:'deck' and no approvalMode; Pass = PATCH /api/jobs/interact {disliked:true}; Save = {starred:true}. `decision` is read live from those. A card carries its band and never a score (job.matchScore is null).",
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeckResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "BadRequest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBadRequest"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid cookie session and no valid bearer token. A mobile client must treat this as 'sign in again' — it is also what an expired or revoked token produces.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorUnauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The object does not exist OR is not yours. The two are deliberately indistinguishable on user-scoped routes — telling a stranger that an id exists is itself a disclosure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorNotFound"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ServerError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorServerError"
                 }
               }
             }
@@ -2362,6 +2448,93 @@
           }
         },
         "description": "The SUBMISSION budget."
+      },
+      "DeckCard": {
+        "type": "object",
+        "properties": {
+          "band": {
+            "type": "string",
+            "enum": [
+              "moderate",
+              "not_enough_signal",
+              "strong",
+              "weak"
+            ]
+          },
+          "decision": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "null (undecided) | 'drafted' | 'passed' | 'saved' — read live, so it changes when you act."
+          },
+          "job": {
+            "$ref": "#/components/schemas/Job",
+            "description": "The board's $Job shape with matchScore null."
+          },
+          "position": {
+            "type": "number"
+          },
+          "why": {
+            "$ref": "#/components/schemas/DeckWhy",
+            "description": "The evidence behind the card, frozen at deal time from the same report as its band."
+          }
+        },
+        "description": "One card, in deal order (position IS the fit signal). The band is shown; the score is not."
+      },
+      "DeckResponse": {
+        "type": "object",
+        "properties": {
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeckCard"
+            }
+          },
+          "date": {
+            "type": "string"
+          },
+          "dealtNow": {
+            "type": "boolean"
+          },
+          "profileId": {
+            "type": "number"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "size": {
+            "type": "number"
+          },
+          "thin": {
+            "type": "boolean"
+          }
+        },
+        "description": "Today's frozen deal. Fewer than 10 is a thin day and 0 an empty one — never padded."
+      },
+      "DeckWhy": {
+        "type": "object",
+        "properties": {
+          "matched": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "matchedTotal": {
+            "type": "number"
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Skills the posting asks for that the résumé shows (up to 6) and does not (up to 4)."
       },
       "DomainProfile": {
         "type": "object",
@@ -4523,6 +4696,12 @@
       "running",
       "submitted",
       "superseded"
+    ],
+    "atsBand": [
+      "moderate",
+      "not_enough_signal",
+      "strong",
+      "weak"
     ],
     "automationTier": [
       "direct",

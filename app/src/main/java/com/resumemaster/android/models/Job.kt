@@ -1,5 +1,7 @@
 package com.resumemaster.android.models
 
+import com.resumemaster.android.data.contract.AtsBand
+
 import java.util.UUID
 
 // matchScore is NULLABLE and is INTERNAL.
@@ -11,5 +13,5 @@ import java.util.UUID
 //
 // Internal because the contract says so, verbatim: "DO NOT DISPLAY THIS NUMBER". Render the band
 // from AtsBands.bandFor(score). See AtsBands for why, and for the one sanctioned numeric use.
-data class Job(val id: String = UUID.randomUUID().toString(), val company: String, val role: String, val location: String, val salary: String? = null, val tags: List<String> = emptyList(), val matchScore: Int? = null, val logoColor: String, val description: String, val postedDate: Long = System.currentTimeMillis())
+data class Job(val id: String = UUID.randomUUID().toString(), val company: String, val role: String, val location: String, val salary: String? = null, val tags: List<String> = emptyList(), val matchScore: Int? = null, val band: AtsBand? = null, val logoColor: String, val description: String, val postedDate: Long = System.currentTimeMillis())
 

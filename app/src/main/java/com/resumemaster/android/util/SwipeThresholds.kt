@@ -6,8 +6,6 @@ import kotlin.math.abs
 object SwipeThresholds {
     const val SOFT_OFFSET=80f; const val HARD_OFFSET=160f; const val ROTATION_FACTOR=0.04f; const val STACK_SCALE=0.04f; const val STACK_OFFSET=8f
 
-    /** Upward travel (px) past which a right-swipe is a Star. Negative y is up. */
-    const val DIAGONAL_OFFSET=60f
 
     /**
      * The ONE mapping from drag displacement to action.
@@ -20,6 +18,9 @@ object SwipeThresholds {
      *
      * Displacement only -- there is no velocity term (see README).
      */
-    fun resolve(x:Float,y:Float):SwipeAction?{ val ax=abs(x); if(ax<SOFT_OFFSET)return null; return if(x<0) SwipeAction.Dislike else if(y < -DIAGONAL_OFFSET) SwipeAction.Star else if(ax>HARD_OFFSET) SwipeAction.QueuePriority else SwipeAction.Queue }
+    // Two directions, one meaning each, on every client (UI_REDESIGN §3.4): right DRAFTS, left PASSES.
+    // The diagonal Star and the hard-right "Queue first" are gone (09-30) — two accident-prone motions
+    // bound to two intents. `y` is accepted and ignored, so a diagonal drag is simply a right or a left.
+    fun resolve(x:Float,@Suppress("UNUSED_PARAMETER") y:Float):SwipeAction?{ if(abs(x)<SOFT_OFFSET)return null; return if(x<0) SwipeAction.Dislike else SwipeAction.Queue }
 }
 

@@ -15,7 +15,7 @@ class SwipeResolveTest {
 
   private val soft = SwipeThresholds.SOFT_OFFSET
   private val hard = SwipeThresholds.HARD_OFFSET
-  private val up = SwipeThresholds.DIAGONAL_OFFSET
+  private val up = 60f   // a firm upward component; it no longer means anything
 
   @Test
   fun `a drag short of the soft threshold does nothing, in either direction`() {
@@ -27,20 +27,13 @@ class SwipeResolveTest {
   }
 
   @Test
-  fun `right queues, and a firm right queues first - neither submits`() {
+  fun `right drafts however far and whatever the vertical travel - it never submits`() {
+    // The deck (09-30): one meaning per direction. A hard right used to be "Queue first" and an
+    // up-and-right a Star — two accident-prone motions bound to two different intents.
     assertEquals(SwipeAction.Queue, SwipeThresholds.resolve(soft, 0f))
-    assertEquals(SwipeAction.Queue, SwipeThresholds.resolve(hard, 0f))
-    assertEquals(SwipeAction.QueuePriority, SwipeThresholds.resolve(hard + 1f, 0f))
-  }
-
-  @Test
-  fun `up-and-right past the diagonal stars, and beats queue-first`() {
-    assertEquals(SwipeAction.Star, SwipeThresholds.resolve(soft, -(up + 1f)))
-    assertEquals(SwipeAction.Star, SwipeThresholds.resolve(hard + 1f, -(up + 1f)))
-    // Exactly at the diagonal is not past it.
-    assertEquals(SwipeAction.Queue, SwipeThresholds.resolve(soft, -up))
-    // Downward travel never stars.
-    assertEquals(SwipeAction.Queue, SwipeThresholds.resolve(soft, up * 5))
+    assertEquals(SwipeAction.Queue, SwipeThresholds.resolve(hard + 1f, 0f))
+    assertEquals(SwipeAction.Queue, SwipeThresholds.resolve(soft, -(up * 5)))
+    assertEquals(SwipeAction.Queue, SwipeThresholds.resolve(hard + 1f, up * 5))
   }
 
   @Test

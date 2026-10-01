@@ -135,7 +135,6 @@ class JobsViewModel(
   fun onSwipe(action: SwipeAction, job: Job) {
     when (action) {
       SwipeAction.Queue -> if (queue.none { it.id == job.id }) queue.add(job)
-      SwipeAction.QueuePriority -> if (queue.none { it.id == job.id }) queue.add(0, job)
       SwipeAction.Star -> {
         if (starred.none { it.id == job.id }) starred.add(job)
         write(job, Interaction(starred = true))

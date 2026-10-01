@@ -2,6 +2,8 @@ package com.resumemaster.android.data
 
 import com.resumemaster.android.data.contract.AutomationTier
 import com.resumemaster.android.data.contract.ContractJob
+import com.resumemaster.android.data.contract.Deck
+import com.resumemaster.android.data.contract.parseDeck
 import com.resumemaster.android.data.contract.FeedError
 import com.resumemaster.android.data.contract.FeedException
 import com.resumemaster.android.data.contract.JobFeedPage
@@ -176,6 +178,47 @@ class JobRepository(
         Result.failure(e)
       }
     }
+
+  /**
+   * Today's deck (contract 1.2.0). `date` is the user's LOCAL date — the server accepts it within a
+   * day of its own, and the same date returns the same deck on every client.
+   */
+  suspend fun today(date: String): Result<Deck> = withContext(Dispatchers.IO) {
+    try {
+      val response = client.get("/api/draft/today", listOf("date" to date))
+      if (!response.isSuccess) {
+        val message = errorOf(response.body, "Could not deal today's draft (${response.status})")
+        return@withContext Result.failure(
+          if (response.isUnauthorized) FeedException(FeedError.UNAUTHORIZED, message) else Exception(message))
+      }
+      Result.success(parseDeck(response.body))
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
+
+  /**
+   * Draft one job: POST /api/apply/runs with surface "deck" and ⛔ NO approvalMode. The server's
+   * default parks the job previewed and held for the user's review, and the route REFUSES any
+   * approvalMode from the deck surface — this call cannot submit an application.
+   */
+  suspend fun draft(jobId: String, tool: String = "generate"): Result<Unit> = withContext(Dispatchers.IO) {
+    try {
+      val body = JSONObject()
+        .put("jobIds", org.json.JSONArray().put(jobId))
+        .put("mode", "auto").put("tool", tool).put("surface", "deck")
+      val response = client.post("/api/apply/runs", body.toString())
+      if (!response.isSuccess) {
+        val message = JSONObject(response.body.ifBlank { "{}" }).let { o ->
+          o.optString("message", "").ifEmpty { o.optString("error", "") }.ifEmpty { "Could not draft that (${response.status})" } }
+        return@withContext Result.failure(
+          if (response.isUnauthorized) FeedException(FeedError.UNAUTHORIZED, message) else Exception(message))
+      }
+      Result.success(Unit)
+    } catch (e: Exception) {
+      Result.failure(e)
+    }
+  }
 
   private fun codeOf(body: String): String? = try {
     JSONObject(body).optString("code", "").ifEmpty { null }

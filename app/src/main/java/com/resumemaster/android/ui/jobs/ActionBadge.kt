@@ -23,8 +23,7 @@ sealed class BadgeState{ data object Hidden:BadgeState(); data class Visible(val
 // effect. Keyed on a bare SwipeAction the second Queue in a row was invisible (JobsViewModel.lastAction).
 @Composable fun ActionBadge(event:SwipeEvent?,onDismiss:()->Unit={}){ val action=event?.action; var visible by remember{mutableStateOf(false)}; LaunchedEffect(event){ if(action!=null){ visible=true; delay(2500); visible=false; onDismiss() } }; AnimatedVisibility(visible && action!=null,enter=scaleIn(initialScale=.6f,animationSpec=spring(dampingRatio=.6f))+fadeIn(),exit=fadeOut()){ val (c,i,t)=meta(action?:SwipeAction.Dislike); Surface(shape=RoundedCornerShape(999.dp),color=MaterialTheme.colorScheme.surface,border=BorderStroke(1.dp,Border),shadowElevation=2.dp){ Row(Modifier.padding(horizontal=14.dp,vertical=9.dp),verticalAlignment=Alignment.CenterVertically){ Icon(i,contentDescription=t,tint=c); Text(t,style=LabelSmall,color=MaterialTheme.colorScheme.onSurface,modifier=Modifier.padding(start=8.dp)) } } } }
 /**
- * ⛔ Queue and QueuePriority reach NO server: JobsViewModel keeps them in memory, and they are gone on
- * restart. The badge said "Queued for review" — there is nothing a review screen could find. It says
- * what is true until the deck (ANDROID.md 2c, revised 09-30) makes right a server-side Draft.
+ * What each action DID, said plainly. Right is a server-side Draft since the deck (DeckViewModel,
+ * 09-30): previewed and held for the user's review — so "waits for your review", never "sent".
  */
-private fun meta(action:SwipeAction):Triple<Color,ImageVector,String> = when(action){ SwipeAction.Queue->Triple(Primary,Icons.Rounded.RadioButtonUnchecked,"Shortlisted on this phone — not queued yet"); SwipeAction.QueuePriority->Triple(Primary,Icons.Rounded.ArrowCircleUp,"Shortlisted first on this phone — not queued yet"); SwipeAction.Star->Triple(Gold,Icons.Rounded.Star,"Saved to starred"); SwipeAction.Dislike->Triple(TextMuted,Icons.Rounded.HorizontalRule,"Passed — it won't come back") }
+private fun meta(action:SwipeAction):Triple<Color,ImageVector,String> = when(action){ SwipeAction.Queue->Triple(Primary,Icons.Rounded.RadioButtonUnchecked,"Drafted — it waits for your review"); SwipeAction.Star->Triple(Gold,Icons.Rounded.Star,"Saved"); SwipeAction.Dislike->Triple(TextMuted,Icons.Rounded.HorizontalRule,"Passed — it won't come back") }
