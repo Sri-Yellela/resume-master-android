@@ -111,6 +111,8 @@ back. Inspecting the XML is NOT sufficient — these rules fail quietly when a p
 
 ## OPEN 2c — Swipe feed (after 2b)
 
+✅ **BUILT 09-30 (`f7fdc2c`)** — DeckViewModel, Today's draft on the shared deal, right = server Draft, two gestures; 58/58 JVM, 15/15 instrumented, checked on the emulator.
+
 ⛔ **REVISED 09-30 — 2c is now the DECK**, per `../draft/docs/UI_REDESIGN.md` §3 and §5.2. The text
 block below is kept for its still-true constraints (cursor paging for "All jobs", `interact` not the
 toggles, the band not a number). What changes:
