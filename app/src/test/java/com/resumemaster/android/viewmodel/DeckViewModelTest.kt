@@ -113,6 +113,8 @@ class DeckViewModelTest {
     assertEquals(listOf("a", "c"), v.jobs.value.map { it.id })
     assertEquals("Add your email address first.", v.error.value)
     assertEquals(1, v.drafted.value)
+    // The optimistic badge said "Drafted"; it must not stay up beside the snackbar saying it was not.
+    assertEquals(null, v.lastAction.value)
   }
 
   @Test

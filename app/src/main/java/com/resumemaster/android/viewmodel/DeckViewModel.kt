@@ -92,7 +92,8 @@ class DeckViewModel(
     // Commit at once — the card leaves the stack now; the call races behind it.
     _jobs.value = _jobs.value.filterNot { it.id == job.id }
     if (action == SwipeAction.Queue) _drafted.value += 1
-    _lastAction.value = SwipeEvent(action, ++swipeSeq)
+    val event = SwipeEvent(action, ++swipeSeq)
+    _lastAction.value = event
     viewModelScope.launch {
       val result = when (action) {
         SwipeAction.Queue -> repository.draft(job.id)
@@ -103,6 +104,9 @@ class DeckViewModel(
         // Back to the FRONT, undecided — the user is shown the card the server refused.
         _jobs.value = listOf(job) + _jobs.value.filterNot { it.id == job.id }
         if (action == SwipeAction.Queue) _drafted.value -= 1
+        // And the optimistic badge ("Saved", "Drafted") comes down: it said the decision stuck, and
+        // it did not (A14's open item). Only THIS swipe's badge — a later swipe's stays up.
+        if (_lastAction.value == event) _lastAction.value = null
         onFailure(e)
       }
     }
