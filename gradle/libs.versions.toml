@@ -16,6 +16,7 @@ accompanist = "0.36.0"
 itext = "9.6.0"
 browser = "1.8.0"
 securityCrypto = "1.1.0"
+tink = "1.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,6 +47,7 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 itext-core = { group = "com.itextpdf", name = "itext7-core", version.ref = "itext" }
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 androidx-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tink" }
 json = { group = "org.json", name = "json", version = "20250517" }
 
 [plugins]

@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.resumemaster.android.AppGraph
 import com.resumemaster.android.viewmodel.AuthViewModel
 
 /**
@@ -26,15 +27,30 @@ import com.resumemaster.android.viewmodel.AuthViewModel
  * The name and plan lines are still hardcoded -- blocked on 2b1, see CORRUPTION_SWEEP_ANDROID.md.
  */
 @Composable
-fun ProfileScreen(onAdmin: () -> Unit, onSignedOut: () -> Unit, vm: AuthViewModel = viewModel()) {
+fun ProfileScreen(
+  onAdmin: () -> Unit,
+  onSignedOut: () -> Unit,
+  onPortals: () -> Unit = {},
+  vm: AuthViewModel = viewModel(),
+) {
   val state by vm.state.collectAsState()
   LaunchedEffect(state.signedIn) { if (!state.signedIn) onSignedOut() }
-  ProfileContent(onAdmin = onAdmin, onSignOut = vm::signOut, signingOut = state.busy, signOutError = state.error)
+  ProfileContent(
+    onAdmin = onAdmin, onSignOut = vm::signOut, signingOut = state.busy, signOutError = state.error,
+    // D112 item 7: the Portals row exists only when a worker identity is pinned in this build.
+    onPortals = if (AppGraph.portals.isOffered) onPortals else null,
+  )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileContent(onAdmin: () -> Unit, onSignOut: () -> Unit, signingOut: Boolean, signOutError: String?) {
+fun ProfileContent(
+  onAdmin: () -> Unit,
+  onSignOut: () -> Unit,
+  signingOut: Boolean,
+  signOutError: String?,
+  onPortals: (() -> Unit)? = null,
+) {
   Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("Profile") }) }) { padding ->
     Column(Modifier.padding(padding).padding(18.dp)) {
       Text("Sri Yellela", style = MaterialTheme.typography.titleMedium)
@@ -52,6 +68,20 @@ fun ProfileContent(onAdmin: () -> Unit, onSignOut: () -> Unit, signingOut: Boole
         Icon(Icons.Rounded.ChevronRight, contentDescription = "Open")
       }
       HorizontalDivider()
+      if (onPortals != null) {
+        Row(
+          Modifier.fillMaxWidth().clickable(onClick = onPortals).padding(vertical = 14.dp),
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Icon(Icons.Rounded.Link, contentDescription = null)
+          Column(Modifier.weight(1f).padding(start = 12.dp)) {
+            Text("Portals")
+            Text("Job sites draft may apply on for you, sealed", style = MaterialTheme.typography.labelSmall)
+          }
+          Icon(Icons.Rounded.ChevronRight, contentDescription = "Open")
+        }
+        HorizontalDivider()
+      }
       Row(
         Modifier.fillMaxWidth().clickable(enabled = !signingOut, onClick = onSignOut).padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
