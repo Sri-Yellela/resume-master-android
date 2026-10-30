@@ -28,6 +28,19 @@ build flavour (`ANDROID.md`, 2b1) and must not ship in a Play build.
 - Material swipe actions on resume sections: edit, hide, delete
 - A badge confirming each swipe
 
+## Portals — in-app connect (D112 item 7) — OFF until a worker identity is pinned
+Profile → Portals → **Connect amazon.jobs**: a consent dialog, then an in-app WebView on the portal's sign-in.
+When the page shows a sign-out control (or an account page URL), **Let draft apply here** asks draft for the apply
+worker's per-session key, ⛔ verifies its Ed25519 signature against `BuildConfig.PINNED_WORKER_IDENTITY` (never
+the identity draft's reply names), reads `CookieManager` cookies for the family's three origins only, seals them
+on the phone (`data/portals/PortalCrypto.kt` — draft `apply-worker/lib/keys.js`'s scheme) and uploads ciphertext
+only. The WebView's cookies, storage, cache and history are cleared when the screen closes. Disconnect = DELETE,
+and the worker destroys the key.
+- **`PINNED_WORKER_IDENTITY` is empty** (`app/build.gradle.kts`), so the Profile row is not drawn. The owner pins
+  the deployed worker's `GET /identity` value — the same one the extension pins.
+- ⚠ The four `/api/portals*` routes are **not in the vendored contract** (1.2.0); they are called through
+  `ApiClient` directly. The real amazon.jobs flow inside a WebView has **not** been exercised.
+
 ## Not working yet
 - **LinkedIn import** — broken on both sides: the server never sends what the app parses, and the
   deep-link host is still a placeholder. Needs a server change first.

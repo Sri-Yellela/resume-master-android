@@ -22,6 +22,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ⛔ D112 item 7 — THE PINNED APPLY-WORKER IDENTITY: the Ed25519 public key (SPKI DER, base64url) of the
+        // apply worker's long-term signing identity (draft apply-worker/lib/keys.js; the deployed worker answers
+        // GET /identity with it). The app verifies every minted session key against THIS value — never against
+        // the identity draft's reply carries. EMPTY UNTIL THE OWNER PINS THE DEPLOYED WORKER'S KEY, and while it
+        // is empty Portals is not offered at all (PortalRepository.isOffered). Mirrors the extension's
+        // PINNED_WORKER_IDENTITY; the two must name the same key.
+        buildConfigField("String", "PINNED_WORKER_IDENTITY", "\"\"")
     }
 
     buildTypes {
@@ -82,6 +90,9 @@ dependencies {
     implementation(libs.itext.core)
     implementation(libs.androidx.browser)
     implementation(libs.androidx.security.crypto)
+    // X25519 / Ed25519 / HKDF for sealing a portal sign-in (data/portals/PortalCrypto.kt). Already on the
+    // classpath through security-crypto; declared so a security-crypto bump cannot silently remove it.
+    implementation(libs.tink.android)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)

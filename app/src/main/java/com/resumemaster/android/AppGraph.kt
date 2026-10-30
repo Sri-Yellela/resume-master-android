@@ -8,6 +8,7 @@ import com.resumemaster.android.data.ResumeRepository
 import com.resumemaster.android.data.SecureTokenStore
 import com.resumemaster.android.data.db.AppDatabase
 import com.resumemaster.android.data.net.ApiClient
+import com.resumemaster.android.data.portals.PortalRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,6 +41,10 @@ object AppGraph {
     private set
 
   lateinit var database: AppDatabase
+    private set
+
+  /** D112 item 7 — connected portals. `portals.isOffered` is false while no worker identity is pinned. */
+  lateinit var portals: PortalRepository
     private set
 
   /**
@@ -80,6 +85,7 @@ object AppGraph {
       val t1 = android.os.SystemClock.uptimeMillis()
       auth = AuthRepository(tokenStore, baseUrl)
       jobs = JobRepository(auth.authed)
+      portals = PortalRepository(auth.authed, BuildConfig.PINNED_WORKER_IDENTITY)
       val t2 = android.os.SystemClock.uptimeMillis()
       // Room does not touch the disk until the first query, so building it here does no main-thread
       // I/O; the hydration that does happens on appScope inside ResumeRepository.

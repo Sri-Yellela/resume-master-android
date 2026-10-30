@@ -71,6 +71,10 @@ class ApiClient(
   fun patch(path: String, jsonBody: String? = null): ApiResponse =
     request("PATCH", path, emptyList(), jsonBody)
 
+  /** DELETE carries no body here (DELETE /api/portals/:id takes none). The desktop JDK supports it too. */
+  fun delete(path: String): ApiResponse =
+    request("DELETE", path, emptyList(), null)
+
   private fun request(
     method: String,
     path: String,
